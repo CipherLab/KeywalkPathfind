@@ -1,0 +1,15 @@
+{
+  "profiles": {
+    "KeyWalkAnalyzer": {
+      "commandName": "Project",
+      "commandLineArgs": " process -p \"C:\\\\hashcat\\\\lists\\\\wallet.txt\""
+    }
+  }
+}, {
+  "profiles2": {
+    "KeyWalkAnalyzer": {
+      "commandName": "Project",
+      "commandLineArgs1": " generate -c ►►► -l 8 -s a"
+    }
+  }
+}

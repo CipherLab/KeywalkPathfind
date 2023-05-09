@@ -5,55 +5,150 @@ public class PathFinder
 {
     private char[,] _table { get; }
     private KMP _kmp { get; }
+    private Helpers _helper { get; }
 
     public PathFinder(char[,] table)
     {
         _table = table;
         _kmp = new KMP();
+        _helper = new Helpers();
     }
 
     public List<Command> FindPath(string password, string simplified)
     {
         List<Command> commands = new List<Command>();
+        char simplifiedEndchar = simplified[simplified.Length - 1];
+        char passwordEndchar = password[password.Length - 1];
 
         for (int i = 0; i < simplified.Length - 1; i++)
         {
             char start = simplified[i];
-            char end = simplified[i + 1];
+            char end = (i < simplified.Length - 1) ? simplified[i + 1] : simplifiedEndchar; // Add an appropriate end character or goal for the last character
+            char pend = (i < password.Length - 1) ? password[i + 1] : passwordEndchar; // Add an appropriate end character or goal for the last character
 
-            List<Tuple<int, int>> path = AStarPathFinding(start, end);
-
-            for (int j = 0; j < path.Count - 1; j++)
-            {
-                var current = path[j];
-                var next = path[j + 1];
-
-                string direction = GetDirection(current, next);
-                bool take = (_table[next.Item1, next.Item2] == end);
-                bool isShift = (simplified[i] != password[i]);
-
-                commands.Add(new Command(direction, take, isShift));
-            }
+            List<Command> characterCommands = ProcessCharacter(start, end, pend);
+            commands.AddRange(characterCommands);
         }
 
         return commands;
     }
 
-    public List<Command> StringToCommands(string commandsString)
+    private List<Command> ProcessCharacter(char start, char end, char pend)
     {
         List<Command> commands = new List<Command>();
-        if (commandsString.Length > 0)
+        List<Tuple<int, int>> path = AStarPathFinding(start, end);
+
+        for (int j = 0; j < path.Count - 1; j++)
         {
-            foreach (char part in commandsString)
-            {
-            }
+            var current = path[j];
+            var next = path[j + 1];
+
+            string direction = GetDirection(current, next);
+            bool take = (_table[next.Item1, next.Item2] == end);
+            bool isShift = ((end != pend) && take);
+            commands.Add(new Command(direction, take, isShift));
         }
+
         return commands;
     }
 
-    public List<Command> ReducePattern(List<Command> inputCommands, bool includeShift)
+    public List<Command> StringToCommands(string inputString)
     {
-        var smallestRepeatingPattern = ReducedToString(inputCommands, includeShift);
+        List<Command> commandList = new List<Command>();
+
+        foreach (char c in inputString)
+        {
+            bool isShift = false;
+            bool take = false;
+            string direction = "";
+
+            switch (c)
+            {
+                case '↑':
+                    direction = "↑";
+                    break;
+
+                case '↓':
+                    direction = "↓";
+                    break;
+
+                case '←':
+                    direction = "←";
+                    break;
+
+                case '→':
+                    direction = "→";
+                    break;
+
+                case '◄':
+                    direction = "←";
+                    take = true;
+                    break;
+
+                case '►':
+                    direction = "→";
+                    take = true;
+                    break;
+
+                case '▲':
+                    direction = "↑";
+                    take = true;
+                    break;
+
+                case '▼':
+                    direction = "↓";
+                    take = true;
+                    break;
+
+                case '╢':
+                    direction = "←";
+                    isShift = true;
+                    take = true;
+                    break;
+
+                case '╟':
+                    direction = "→";
+                    isShift = true;
+                    take = true;
+                    break;
+
+                case '╧':
+                    direction = "↑";
+                    isShift = true;
+                    take = true;
+                    break;
+
+                case '╤':
+                    direction = "↓";
+                    isShift = true;
+                    take = true;
+                    break;
+
+                case '◙':
+                    direction = "◘";
+                    direction = "↓";
+                    isShift = true;
+                    take = true;
+                    break;
+
+                case '◘':
+                    direction = "◘";
+                    isShift = false;
+                    take = true;
+                    break;
+
+                default:
+                    continue;
+            }
+
+            commandList.Add(new Command(direction, take, isShift));
+        }
+        return commandList;
+    }
+
+    public List<Command> ReduceCommands(List<Command> inputCommands)
+    {
+        var smallestRepeatingPattern = ReduceCommandsToString(inputCommands);
         if (smallestRepeatingPattern.Length < inputCommands.Count() - 1)
         {
             var smallerCommandList = StringToCommands(smallestRepeatingPattern);
@@ -62,7 +157,7 @@ public class PathFinder
         return inputCommands;
     }
 
-    public string ReducedToString(List<Command> inputCommands, bool includeShift)
+    public string ReduceCommandsToString(List<Command> inputCommands)
     {
         StringBuilder sb = new StringBuilder();
         foreach (var c in inputCommands)
@@ -70,6 +165,22 @@ public class PathFinder
             sb.Append(c.ToString());
         }
         var smallestRepeatingPattern = _kmp.GetSmallestRepeatingPattern(sb.ToString());
+        return smallestRepeatingPattern;
+    }
+
+    public string CommandsToString(List<Command> inputCommands)
+    {
+        StringBuilder sb = new StringBuilder();
+        foreach (var c in inputCommands)
+        {
+            sb.Append(c.ToString());
+        }
+        return sb.ToString();
+    }
+
+    public string ReduceCommandString(string commands)
+    {
+        var smallestRepeatingPattern = _kmp.GetSmallestRepeatingPattern(commands);
         return smallestRepeatingPattern;
     }
 
@@ -82,7 +193,7 @@ public class PathFinder
         if (dx == 1 && dy == 0) return "↓";
         if (dx == 0 && dy == -1) return "←";
         if (dx == 0 && dy == 1) return "→";
-        if (dx == 0 && dy == 0) return "◘";
+        if (dx == 0 && dy == 0) return "■";
 
         return "";
     }

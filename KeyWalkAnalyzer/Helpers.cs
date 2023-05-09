@@ -13,7 +13,7 @@ public class Helpers
         {'<', ','}, {'>', '.'}, {'?', '/'}, {'"', '\''}, {'\\', '\\'}
     };
 
-    private readonly Dictionary<char, char> characterMap2 = new()
+    private readonly Dictionary<char, char> characterMapShift = new()
     {
         {'!', '1'}, {'@', '2'}, {'#', '3'}, {'$', '4'}, {'%', '5'},
         {'^', '6'}, {'&', '7'}, {'*', '8'}, {'(', '9'}, {')', '0'},
@@ -41,6 +41,54 @@ public class Helpers
         return simplified.ToString();
     }
 
+    public List<string> GeneratePassword(string commandString, int length, string startingPoint)
+    {
+        PathFinder pathfinder = new(table: GetSimplifiedTable());
+
+        var commands = pathfinder.StringToCommands(commandString);
+
+        List<string> generatedPasswords = new List<string>();
+
+        foreach (char startChar in startingPoint)
+        {
+            TableTraversal tableTraversal = new TableTraversal(table: GetSimplifiedTable());
+            var generatedPassword = tableTraversal.BuildString(startChar, commands.ToArray(), length);
+
+            //Console.WriteLine($"Rebuilt string: {generatedPassword}");
+            if (!string.IsNullOrEmpty(generatedPassword))
+                generatedPasswords.Add(generatedPassword);
+        }
+
+        return generatedPasswords;
+    }
+
+    public bool IsShiftCharacter(char input)
+    {
+        if (char.IsLetter(input))
+        {
+            return char.IsUpper(input);
+        }
+        else if (char.IsDigit(input))
+        {
+            return false;
+        }
+        else
+        {
+            if (characterMap.TryGetValue(input, out char opposite))
+            {
+                return false;
+            }
+            else if (characterMapShift.TryGetValue(input, out char opposite2))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
+
     public char GetOppositeShiftCharacter(char input)
     {
         if (char.IsLetter(input))
@@ -53,7 +101,7 @@ public class Helpers
             {
                 return opposite;
             }
-            else if (characterMap2.TryGetValue(input, out char opposite2))
+            else if (characterMapShift.TryGetValue(input, out char opposite2))
             {
                 return opposite2;
             }
@@ -124,5 +172,27 @@ public class Helpers
             // Create a flag file for the processed filename
             File.Create(flagFile).Close();
         }
+    }
+
+    internal char[,] GetSimplifiedTable()
+    {
+        return new char[,]
+      {
+            {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-','=',' '},
+            {'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[',']', '\\'},
+            {'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'',' ',' '},
+            {'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', ' ', ' ', ' '}
+      };
+    }
+
+    internal char[,] GetShiftTable()
+    {
+        return new char[,]
+      {
+            {'!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_','+',' '},
+            {'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{','}', '|'},
+            {'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '"',' ',' '},
+            {'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?', ' ', ' ', ' '}
+      };
     }
 }

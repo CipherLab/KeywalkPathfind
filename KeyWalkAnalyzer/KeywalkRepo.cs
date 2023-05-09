@@ -2,6 +2,7 @@
 using Dapper.Contrib.Extensions;
 using LazyCache;
 using Microsoft.Data.SqlClient;
+using System.Diagnostics.Metrics;
 
 namespace KeyWalkAnalyzer
 {
@@ -35,48 +36,9 @@ namespace KeyWalkAnalyzer
             }
         }
 
-        private async Task<long> InsertCommandActionAsync(CommandAction commandAction)
-        {
-            // Create a cache key based on the Direction, Take, and Shift values
-            string cacheKey = $"CommandAction:{commandAction.Direction}:{commandAction.Take}:{commandAction.Shift}";
-
-            // Try to get the CommandActionId from the cache
-            int? cachedCommandActionId = _cache.Get<int?>(cacheKey);
-
-            if (cachedCommandActionId.HasValue)
-            {
-                // If the CommandActionId is found in the cache, return it
-                return cachedCommandActionId.Value;
-            }
-            else
-            {
-                // If the CommandActionId is not found in the cache, query the database
-                using (SqlConnection connection = new SqlConnection(_connectionString))
-
-                {
-                    var existingCommandAction = await connection.QueryFirstOrDefaultAsync<CommandAction>(
-                    "SELECT * FROM [dbo].[CommandActions] WHERE Direction = @Direction AND Take = @Take AND Shift = @Shift",
-                    new { Direction = commandAction.Direction, Take = commandAction.Take, Shift = commandAction.Shift }
-                    );
-
-                    // If a duplicate record exists, cache and return the existing CommandActionId
-                    if (existingCommandAction != null)
-                    {
-                        _cache.Add(cacheKey, existingCommandAction.CommandActionId);
-                        return existingCommandAction.CommandActionId;
-                    }
-
-                    // If no duplicate record exists, insert a new record, cache, and return the new CommandActionId
-                    int commandActionId = await connection.InsertAsync<CommandAction>(commandAction);
-                    _cache.Add(cacheKey, commandActionId);
-                    return commandActionId;
-                }
-            }
-        }
-
         private HashSet<string> savedHashes = new HashSet<string>();
 
-        public async Task SaveToDatabaseAsync(List<Command> commands, int counts, string key, string fileName)
+        public async Task SaveToDatabaseAsync(string command, int count)
         {
             try
             {
@@ -95,11 +57,11 @@ namespace KeyWalkAnalyzer
                         try
                         {
                             CommandActionsHeader existingHeader = new CommandActionsHeader();
-                            if (savedHashes.TryGetValue(key, out var hash))
+                            if (savedHashes.TryGetValue(command, out var hash))
                             {
                                 // If a record exists, increment the occurrences count and update the record
                                 existingHeader = connection.QueryFirstOrDefault<CommandActionsHeader>("SELECT * FROM [dbo].[CommandActionsHeaders] WHERE CommandHash = @CommandHash", new { CommandHash = hash });
-                                existingHeader.ObservedCount += counts;
+                                existingHeader.ObservedCount += count;
                                 connection.Update(existingHeader);
                             }
                             else
@@ -107,37 +69,15 @@ namespace KeyWalkAnalyzer
                                 // If no record exists, create a new record with the hash and occurrences count
                                 var newHeader = new CommandActionsHeader
                                 {
-                                    CommandHash = key,
-                                    ObservedCount = counts,
+                                    CommandHash = command,
+                                    ObservedCount = count,
                                 };
 
                                 var headerId = await connection.InsertAsync<CommandActionsHeader>(newHeader);
                                 existingHeader = newHeader;
                                 existingHeader.CommandActionsHeaderId = headerId;
                                 //transaction.Commit();
-                                savedHashes.Add(key);
-                            }
-
-                            int i = 0;
-                            // Save commands in the CommandAction table and associate them with the header
-                            foreach (var command in commands)
-                            {
-                                var commandAction = new CommandAction
-                                {
-                                    Direction = command.Direction,
-                                    Take = command.Take,
-                                    Shift = command.IsShift
-                                };
-
-                                var commandActionId = await InsertCommandActionAsync(commandAction);
-
-                                var commandActionGroup = new CommandActionGroup
-                                {
-                                    CommandActionId = commandActionId,
-                                    CommandActionHeaderId = existingHeader.CommandActionsHeaderId,
-                                    Seq = i++
-                                };
-                                await connection.InsertAsync(commandActionGroup);
+                                savedHashes.Add(command);
                             }
 
                             // Commit the transaction
@@ -211,18 +151,17 @@ namespace KeyWalkAnalyzer
             }
         }
 
-        public async Task SaveToDatabaseAsync(IEnumerable<KeyValuePair<string, Tuple<List<Command>, int>>> commands, string fileIn)
+        public async Task SaveToDatabaseAsync(IEnumerable<KeyValuePair<string, Tuple<string, int>>> commands)
         {
             foreach (var item in commands)
             {
-                if (string.IsNullOrEmpty(item.Key) || item.Key.Length > 200)
+                if (string.IsNullOrEmpty(item.Key) || item.Key.Length >= 550)
                     continue;
 
                 await SaveToDatabaseAsync(
-
                     item.Value.Item1,
-                    item.Value.Item2,
-                    item.Key, fileIn);
+                    item.Value.Item2
+                    );
             }
         }
     }

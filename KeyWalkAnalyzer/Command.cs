@@ -5,7 +5,6 @@ public class Command
     public string Direction { get; set; }
     public bool Take { get; set; }
 
-    [JsonIgnore]
     public bool IsShift { get; set; }
 
     public Command(string direction, bool take, bool isShift)
@@ -17,6 +16,26 @@ public class Command
 
     public override string ToString()
     {
+        if (IsShift)
+        {
+            switch (this.Direction)
+            {
+                case "↑":
+                    return "╧";
+
+                case "↓":
+                    return "╤";
+
+                case "←":
+                    return "╢";
+
+                case "→":
+                    return "╟";
+
+                default:
+                    return "◙";
+            }
+        }
         if (Take)
         {
             switch (this.Direction)
@@ -37,9 +56,7 @@ public class Command
                     return "◘";
             }
         }
-        else
-        {
-            return this.Direction;
-        }
+
+        return this.Direction;
     }
 }
