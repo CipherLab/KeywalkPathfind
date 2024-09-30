@@ -5,7 +5,7 @@ VisualStudioVersion = 17.5.33424.131
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KeyWalkAnalyzer", "KeyWalkAnalyzer\KeyWalkAnalyzer.csproj", "{44946DF2-DA9B-4CD3-A6F7-E6B5FB31223D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject1", "TestProject1\TestProject1.csproj", "{F68B82FE-D54D-462F-BDC2-B5301C9F70A5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject2", "TestProject2\TestProject2.csproj", "{CC111B1B-3557-4DCA-8299-7EB79446FE7F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,10 @@ Global
 		{44946DF2-DA9B-4CD3-A6F7-E6B5FB31223D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{44946DF2-DA9B-4CD3-A6F7-E6B5FB31223D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{44946DF2-DA9B-4CD3-A6F7-E6B5FB31223D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F68B82FE-D54D-462F-BDC2-B5301C9F70A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F68B82FE-D54D-462F-BDC2-B5301C9F70A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F68B82FE-D54D-462F-BDC2-B5301C9F70A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F68B82FE-D54D-462F-BDC2-B5301C9F70A5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CC111B1B-3557-4DCA-8299-7EB79446FE7F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC111B1B-3557-4DCA-8299-7EB79446FE7F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC111B1B-3557-4DCA-8299-7EB79446FE7F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC111B1B-3557-4DCA-8299-7EB79446FE7F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

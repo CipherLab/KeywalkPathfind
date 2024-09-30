@@ -174,7 +174,7 @@ public class Helpers
         }
     }
 
-    internal char[,] GetSimplifiedTable()
+    public char[,] GetSimplifiedTable()
     {
         return new char[,]
       {
@@ -185,7 +185,7 @@ public class Helpers
       };
     }
 
-    internal char[,] GetShiftTable()
+    public char[,] GetShiftTable()
     {
         return new char[,]
       {

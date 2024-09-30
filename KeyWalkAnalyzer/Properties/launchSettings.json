@@ -2,7 +2,7 @@
   "profiles": {
     "KeyWalkAnalyzer": {
       "commandName": "Project",
-      "commandLineArgs": " process -p \"C:\\\\hashcat\\\\lists\\\\wallet.txt\""
+      "commandLineArgs": " process -p \"C:\\\\hashcat\\\\lists\\\\chunks\\\\\""
     }
   }
 }, {

@@ -6,12 +6,13 @@ public class Command
     public bool Take { get; set; }
 
     public bool IsShift { get; set; }
-
-    public Command(string direction, bool take, bool isShift)
+    public int Count { get; set; }
+    public Command(string direction, bool take, bool isShift, int count = 1)
     {
         Direction = direction;
         Take = take;
         IsShift = isShift;
+        Count = count;
     }
 
     public override string ToString()
