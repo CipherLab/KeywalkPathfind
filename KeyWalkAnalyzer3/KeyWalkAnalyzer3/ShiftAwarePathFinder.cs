@@ -1,9 +1,10 @@
+// Updated ShiftAwarePathFinder.cs
+
 using System;
 using System.Collections.Generic;
 
 namespace KeyboardPathAnalysis
 {
-
     public class ShiftAwarePathFinder
     {
         private readonly IKeyboardWeightStrategy weightStrategy;
@@ -20,31 +21,43 @@ namespace KeyboardPathAnalysis
             var path = new List<PathStep>();
             ShiftState currentShiftState = ShiftState.NoShift;
 
-            for (int i = 0; i < sequence.Length - 1; i++)
+            for (int i = 0; i < sequence.Length; i++)
             {
-                // Determine if next character needs shift
-                bool nextNeedsShift = char.IsUpper(sequence[i + 1]) ||
-                                    IsShiftCharacter(sequence[i + 1]);
+                char currentChar = sequence[i];
+                char lowerChar = char.ToLower(currentChar);
+                bool needsShift = char.IsUpper(currentChar) || IsShiftCharacter(currentChar);
 
                 // Determine optimal shift key if needed
-                if (nextNeedsShift)
+                if (needsShift)
                 {
-                    currentShiftState = DetermineOptimalShiftKey(
-                        keyboardLayout[sequence[i]],
-                        keyboardLayout[sequence[i + 1]]
-                    );
+                    EnhancedKeyPosition current = keyboardLayout.ContainsKey(lowerChar) ? keyboardLayout[lowerChar] : null;
+                    EnhancedKeyPosition next = null;
+                    if (i + 1 < sequence.Length)
+                        next = keyboardLayout.ContainsKey(char.ToLower(sequence[i + 1])) ? keyboardLayout[char.ToLower(sequence[i + 1])] : null;
+
+                    if (current != null && next != null)
+                    {
+                        currentShiftState = DetermineOptimalShiftKey(current, next);
+                    }
                 }
 
                 var steps = CalculateSteps(
-                    keyboardLayout[sequence[i]],
-                    keyboardLayout[sequence[i + 1]],
+                    keyboardLayout.ContainsKey(lowerChar) ? keyboardLayout[lowerChar] : null,
+                    needsShift ? keyboardLayout.ContainsKey(lowerChar) ? keyboardLayout[lowerChar] : null : keyboardLayout.ContainsKey(lowerChar) ? keyboardLayout[lowerChar] : null,
                     currentShiftState
                 );
+
+                // Set the Key for press actions
+                foreach (var step in steps)
+                {
+                    if (step.Direction == "press" || step.Direction == "release")
+                        step.Key = currentChar;
+                }
 
                 path.AddRange(steps);
 
                 // Reset shift state after character
-                if (!nextNeedsShift)
+                if (!needsShift)
                 {
                     currentShiftState = ShiftState.NoShift;
                 }
@@ -71,16 +84,17 @@ namespace KeyboardPathAnalysis
         }
 
         private List<PathStep> CalculateSteps(
-            EnhancedKeyPosition from,
-            EnhancedKeyPosition to,
-            ShiftState shiftState)
+       EnhancedKeyPosition from,
+       EnhancedKeyPosition to,
+       ShiftState shiftState)
         {
             var steps = new List<PathStep>();
 
             // Add shift press if needed
-            if (shiftState != ShiftState.NoShift && to.RequiresShift)
+            if (shiftState != ShiftState.NoShift && to != null && to.RequiresShift)
             {
-                steps.Add(new PathStep("shift_down", isPress: true)
+                char shiftKey = shiftState == ShiftState.LeftShift ? 'L' : 'R';
+                steps.Add(new PathStep(shiftKey, "shift_down", isPress: true)
                 {
                     Hand = shiftState == ShiftState.LeftShift ? Hand.Left : Hand.Right
                 });
@@ -88,16 +102,18 @@ namespace KeyboardPathAnalysis
 
             // Calculate movement
             double movementCost = weightStrategy.CalculateMovementCost(from, to, shiftState);
-            steps.Add(new PathStep("move", isPress: false) { Cost = movementCost });
+            steps.Add(new PathStep('\0', "move", isPress: false) { Cost = movementCost });
 
-            // Add key press
+            // Add key press and release
             double pressCost = weightStrategy.CalculateKeyPressCost(to, shiftState);
-            steps.Add(new PathStep("press", isPress: true) { Cost = pressCost });
+            steps.Add(new PathStep(to != null ? to.Key : '\0', "press", isPress: true) { Cost = pressCost });
+            steps.Add(new PathStep(to != null ? to.Key : '\0', "release", isPress: false) { Cost = pressCost * 0.5 }); // Added release step
 
             // Release shift if used
-            if (shiftState != ShiftState.NoShift && to.RequiresShift)
+            if (shiftState != ShiftState.NoShift && to != null && to.RequiresShift)
             {
-                steps.Add(new PathStep("shift_up", isPress: true));
+                char shiftKey = shiftState == ShiftState.LeftShift ? 'L' : 'R';
+                steps.Add(new PathStep(shiftKey, "shift_up", isPress: true));
             }
 
             return steps;

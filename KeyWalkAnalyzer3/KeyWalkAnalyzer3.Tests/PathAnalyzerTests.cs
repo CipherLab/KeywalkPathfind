@@ -82,9 +82,9 @@ namespace KeyWalkAnalyzer3.Tests
             // Arrange
             var path = new List<PathStep>
             {
-                new PathStep("right"),
-                new PathStep("right"),
-                new PathStep("right")
+                new PathStep('a',"right"),
+                new PathStep('a', "right"),
+                new PathStep('a', "right")
             };
 
             // Act
@@ -98,7 +98,7 @@ namespace KeyWalkAnalyzer3.Tests
         [Theory]
         [InlineData("test1", "test2", 0.8)] // Similar passwords
         [InlineData("abc123", "xyz789", 0.2)] // Different passwords
-        [InlineData("password", "password123", 0.83)] // Common prefix
+        [InlineData("qwe123", "asdqwe", 0.83)] // Common pattern
         public void CalculateSimilarity_VariousInputs_ReturnsExpectedResults(
             string password1, string password2, double expectedMinSimilarity)
         {

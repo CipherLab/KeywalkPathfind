@@ -1,62 +1,72 @@
-namespace KeyboardPathAnalysis
+namespace KeyboardPathAnalysis;
+public class AStar(KeyboardLayout keyboard)
 {
-    public class AStar
+    private readonly KeyboardLayout keyboard = keyboard;
+    private static readonly (int row, int col)[] DIRECTIONS = new[]
     {
-        private readonly KeyboardLayout keyboard;
-        private static readonly (int row, int col)[] DIRECTIONS = new[]
-        {
             (-1, 0),  // up
             (1, 0),   // down
             (0, -1),  // left
             (0, 1)    // right
         };
 
-        public AStar(KeyboardLayout keyboard)
+    public virtual List<PathStep> FindPath(char startKey, char endKey)
+    {
+        var start = keyboard.GetKeyPosition(startKey);
+        var end = keyboard.GetKeyPosition(endKey);
+
+        if (start == null || end == null)
+            return new List<PathStep>();
+
+        var path = new List<PathStep>();
+
+        // Calculate relative position
+        int rowDiff = end.Row - start.Row;
+        int colDiff = end.Col - start.Col;
+
+        // Add vertical movements
+        bool isFirstStep = true;
+        while (rowDiff != 0)
         {
-            this.keyboard = keyboard;
+            char directionKey = isFirstStep ? startKey : '\0'; // Set startKey for the first step
+            string direction = rowDiff > 0 ? "down" : "up";
+            path.Add(new PathStep(directionKey, direction, isPress: false));
+            rowDiff += rowDiff > 0 ? -1 : 1;
+            isFirstStep = false;
         }
-        public virtual List<PathStep> FindPath(char startKey, char endKey)
+
+        // Add horizontal movements
+        while (colDiff != 0)
         {
-            var start = keyboard.GetKeyPosition(startKey);
-            var end = keyboard.GetKeyPosition(endKey);
+            char directionKey = isFirstStep ? startKey : '\0'; // Set startKey for the first step
+            string direction = colDiff > 0 ? "right" : "left";
+            path.Add(new PathStep(directionKey, direction, isPress: false));
+            colDiff += colDiff > 0 ? -1 : 1;
+            isFirstStep = false;
+        }
 
-            if (start == null || end == null)
-                return new List<PathStep>();
-
-            var path = new List<PathStep>();
-
-            // Calculate relative position
-            int rowDiff = end.Row - start.Row;
-            int colDiff = end.Col - start.Col;
-
-            // Add vertical movements
-            while (rowDiff != 0)
-            {
-                path.Add(new PathStep(rowDiff > 0 ? "down" : "up"));
-                rowDiff += rowDiff > 0 ? -1 : 1;
-            }
-
-            // Add horizontal movements
-            while (colDiff != 0)
-            {
-                path.Add(new PathStep(colDiff > 0 ? "right" : "left"));
-                colDiff += colDiff > 0 ? -1 : 1;
-            }
-
+        // Add final press and release if start and end keys are the same
+        if (startKey == endKey)
+        {
+            path.Add(new PathStep(startKey, "press", isPress: true));
+            path.Add(new PathStep(startKey, "release", isPress: false));
+        }
+        else
+        {
             // Add final press
-            path.Add(new PathStep("", true));
-
-            return path;
+            path.Add(new PathStep(endKey, "press", isPress: true));
         }
-        protected virtual double CalculateCost(char fromKey, char toKey)
-        {
-            var from = keyboard.GetKeyPosition(fromKey);
-            var to = keyboard.GetKeyPosition(toKey);
 
-            if (from == null || to == null)
-                return double.MaxValue;
+        return path;
+    }
+    protected virtual double CalculateCost(char fromKey, char toKey)
+    {
+        var from = keyboard.GetKeyPosition(fromKey);
+        var to = keyboard.GetKeyPosition(toKey);
 
-            return Math.Abs(from.Row - to.Row) + Math.Abs(from.Col - to.Col);
-        }
+        if (from == null || to == null)
+            return double.MaxValue;
+
+        return Math.Abs(from.Row - to.Row) + Math.Abs(from.Col - to.Col);
     }
 }

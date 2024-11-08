@@ -1,13 +1,8 @@
 namespace KeyboardPathAnalysis
 {
-    public class WeightedAStar : AStar
+    public class WeightedAStar(WeightedKeyboardLayout keyboard) : AStar(keyboard)
     {
-        private readonly WeightedKeyboardLayout weightedKeyboard;
-
-        public WeightedAStar(WeightedKeyboardLayout keyboard) : base(keyboard)
-        {
-            this.weightedKeyboard = keyboard;
-        }
+        private readonly WeightedKeyboardLayout weightedKeyboard = keyboard;
 
         protected override double CalculateCost(char fromKey, char toKey)
         {

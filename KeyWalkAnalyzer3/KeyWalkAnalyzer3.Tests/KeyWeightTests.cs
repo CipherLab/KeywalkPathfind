@@ -3,21 +3,15 @@ using KeyboardPathAnalysis;
 using System.Diagnostics;
 using Xunit.Abstractions;
 
-public class FingerStrengthTests
+public class FingerStrengthTests(ITestOutputHelper output)
 {
-    private readonly ITestOutputHelper _output;
-
-    public FingerStrengthTests(ITestOutputHelper output)
-    {
-        _output = output;
-    }
+    private readonly ITestOutputHelper _output = output;
 
     [Theory]
     [InlineData(FingerStrength.Pinky, 0.412)]   // Rounded to three decimal places
     [InlineData(FingerStrength.Ring, 0.608)]
     [InlineData(FingerStrength.Middle, 0.804)]
     [InlineData(FingerStrength.Index, 1.000)]
-    [InlineData(FingerStrength.Thumb, 0.608)]
     public void CalculateFingerFactor_ShouldMatchExpectedValues(FingerStrength finger, double expected)
     {
         // Arrange

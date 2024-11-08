@@ -97,7 +97,7 @@ namespace KeyboardPathAnalysis
             cost *= toWeight.CalculateWeight();
 
             // If using same finger, increase cost
-            if (keyWeights[fromKey].Finger == keyWeights[toKey].Finger)
+            if (fromWeight.Finger == toWeight.Finger)
             {
                 cost *= 1.5;
             }

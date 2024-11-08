@@ -1,3 +1,5 @@
+// Updated PathAnalyzer.cs
+
 using System.Text;
 
 namespace KeyboardPathAnalysis
@@ -47,7 +49,7 @@ namespace KeyboardPathAnalysis
                 {
                     if (count > 1)
                     {
-                        optimized.Add(new PathStep($"{currentStep.Direction} * {count}", currentStep.IsPress));
+                        optimized.Add(new PathStep('\0', $"{currentStep.Direction} * {count}", currentStep.IsPress));
                     }
                     else
                     {
@@ -61,7 +63,7 @@ namespace KeyboardPathAnalysis
             // Add the last group
             if (count > 1)
             {
-                optimized.Add(new PathStep($"{currentStep} * {count}"));
+                optimized.Add(new PathStep('\0', $"{currentStep.Direction} * {count}", currentStep.IsPress));
             }
             else
             {

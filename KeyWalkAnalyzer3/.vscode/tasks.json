@@ -4,12 +4,29 @@
     {
       "label": "dotnet build",
       "type": "shell",
-      "command": "dotnet build",
+      "command": "dotnet build && dotnet test ${workspaceFolder}/KeyWalkAnalyzer3.Tests/KeyWalkAnalyzer3.Tests.csproj",
       "group": {
         "kind": "build",
         "isDefault": true
       },
       "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "test",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "test",
+        "${workspaceFolder}/KeyWalkAnalyzer3.Tests/KeyWalkAnalyzer3.Tests.csproj",
+        "/p:CollectCoverage=true",
+        "/p:CoverletOutputFormat=lcov",
+        "/p:CoverletOutput=./lcov.info"
+      ],
+      "problemMatcher": "$msCompile",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
     }
   ]
 }

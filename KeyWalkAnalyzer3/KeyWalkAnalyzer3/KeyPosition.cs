@@ -1,16 +1,9 @@
 namespace KeyboardPathAnalysis
 {
-    public class KeyPosition
+    public class KeyPosition(int row, int col, char key)
     {
-        public int Row { get; set; }
-        public int Col { get; set; }
-        public char Key { get; set; }
-
-        public KeyPosition(int row, int col, char key)
-        {
-            Row = row;
-            Col = col;
-            Key = key;
-        }
+        public int Row { get; set; } = row;
+        public int Col { get; set; } = col;
+        public char Key { get; set; } = key;
     }
 }
