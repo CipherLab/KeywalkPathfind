@@ -59,7 +59,7 @@ public class AStar(KeyboardLayout keyboard)
 
         return path;
     }
-    protected virtual double CalculateCost(char fromKey, char toKey)
+    public virtual double CalculateCost(char fromKey, char toKey)
     {
         var from = keyboard.GetKeyPosition(fromKey);
         var to = keyboard.GetKeyPosition(toKey);

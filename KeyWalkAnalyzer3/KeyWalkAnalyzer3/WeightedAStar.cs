@@ -4,7 +4,7 @@ public class WeightedAStar(WeightedKeyboardLayout keyboard) : AStar(keyboard)
 {
     private readonly WeightedKeyboardLayout weightedKeyboard = keyboard;
 
-    protected override double CalculateCost(char fromKey, char toKey)
+    public override double CalculateCost(char fromKey, char toKey)
     {
         return weightedKeyboard.GetMovementCost(fromKey, toKey);
     }
