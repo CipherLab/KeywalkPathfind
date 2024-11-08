@@ -1,4 +1,5 @@
 using Xunit;
+using Moq;
 
 namespace KeyWalkAnalyzer3.Tests;
 
@@ -125,5 +126,86 @@ public class WeightStrategyTests
         TestStrategy(_standardStrategy);
         TestStrategy(_gamingStrategy);
         TestStrategy(_mobileStrategy);
+    }
+
+    [Theory]
+    [InlineData(ShiftState.LeftShift, Hand.Left, 0.0, 2.0)]
+    [InlineData(ShiftState.LeftShift, Hand.Left, 0.5, 3.5)]
+    [InlineData(ShiftState.RightShift, Hand.Right, 0.2, 2.6)]
+    [InlineData(ShiftState.RightShift, Hand.Right, 1.0, 5.0)]
+    public void ApplyShiftPenalties_CostModifiedByReachDifficulty(
+        ShiftState shiftState,
+        Hand shiftHand,
+        double reachDifficulty,
+        double expectedCostMultiplier)
+    {
+        // Arrange
+        var fromPos = new TestEnhancedKeyPosition(
+            0,  // row
+            0,  // col
+            'a',  // key
+            shiftHand == Hand.Left ? Hand.Left : Hand.Right,  // preferredHand
+            FingerStrength.Index,  // finger
+            0.0,  // reachDifficulty
+            true,  // isHomeRow
+            false  // last bool parameter
+        );
+        var toPos = new TestEnhancedKeyPosition(
+            0,  // row
+            0,  // col
+            'b',  // key
+            shiftHand,  // preferredHand
+            FingerStrength.Index,  // finger
+            reachDifficulty,  // reachDifficulty
+            true,  // isHomeRow
+            false  // last bool parameter
+        );
+
+        // Act
+        var baseCost = 1.0;
+        var result = _standardStrategy.ApplyShiftPenaltiesPublic(
+            baseCost,
+            fromPos,
+            toPos,
+            shiftState
+        );
+
+        // Assert
+        Assert.Equal(expectedCostMultiplier, result, 2); // Allow for floating point imprecision
+    }
+
+    // Test-specific implementation of EnhancedKeyPosition
+    private class TestEnhancedKeyPosition : EnhancedKeyPosition
+    {
+        public TestEnhancedKeyPosition(
+            int row,
+            int col,
+            char key,
+            Hand preferredHand,
+            FingerStrength finger,
+            double reachDifficulty,
+            bool isHomeRow,
+            bool v = false)
+            : base(row, col, key, preferredHand, finger, reachDifficulty, isHomeRow, v)
+        {
+            // No additional initialization needed
+        }
+    }
+}
+
+// Extension method to expose protected method for testing remains the same
+public static class BaseKeyboardWeightStrategyExtensions
+{
+    public static double ApplyShiftPenaltiesPublic(
+        this BaseKeyboardWeightStrategy strategy,
+        double baseCost,
+        EnhancedKeyPosition from,
+        EnhancedKeyPosition to,
+        ShiftState shiftState)
+    {
+        var method = typeof(BaseKeyboardWeightStrategy)
+            .GetMethod("ApplyShiftPenalties", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+        return (double)method.Invoke(strategy, new object[] { baseCost, from, to, shiftState });
     }
 }

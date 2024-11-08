@@ -6,6 +6,7 @@ public abstract class BaseKeyboardWeightStrategy : IKeyboardWeightStrategy
     protected virtual double SameFingersMovementPenalty { get; } = 1.5;
     protected virtual double CrossHandMovementBonus { get; } = 0.8;
     protected virtual double ShiftHandReachPenaltyFactor { get; } = 1.5;
+    protected virtual bool ApplyAwkwardHandPenalty { get; } = true;
 
     public double CalculateMovementCost(KeyPosition from, KeyPosition to, ShiftState shiftState)
     {
@@ -61,7 +62,9 @@ public abstract class BaseKeyboardWeightStrategy : IKeyboardWeightStrategy
         }
 
         // Extra penalty for awkward combinations
-        if (from.PreferredHand == shiftHand && to.PreferredHand == shiftHand)
+        if (ApplyAwkwardHandPenalty &&
+            from.PreferredHand == shiftHand &&
+            to.PreferredHand == shiftHand)
         {
             cost *= 2.0;
         }
