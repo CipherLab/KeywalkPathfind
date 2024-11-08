@@ -33,11 +33,10 @@ public class ShiftAwarePathFinderTests
         // Assert
         Assert.Empty(path);
     }
-
     [Theory]
-    [InlineData("a")]
-    [InlineData("A")]
-    public void FindPath_SingleCharacter_ReturnsCorrectSteps(string sequence)
+    [InlineData("a", 3, false)]
+    [InlineData("A", 5, true)]
+    public void FindPath_SingleCharacter_ReturnsCorrectSteps(string sequence, int expectedStepCount, bool expectShiftSteps)
     {
         // Arrange
         SetupMockStrategy(1.0, 2.0); // Example costs
@@ -46,16 +45,23 @@ public class ShiftAwarePathFinderTests
         var path = _pathFinder.FindPath(sequence);
 
         // Assert
-        Assert.Equal(char.IsUpper(sequence[0]) ? 4 : 3, path.Count);
+        Assert.Equal(expectedStepCount, path.Count);
+        Assert.Equal(sequence[0], path[expectShiftSteps ? 2 : 1].Key);
 
-        if (char.IsUpper(sequence[0]))
+        if (expectShiftSteps)
         {
-            Assert.Equal($"shift_down for '{sequence[0]}'", path[0].ToString());
+            Assert.Equal("shift_down", path[0].Direction);
+            Assert.Equal("shift_up", path[4].Direction);
+        }
+        else
+        {
+            Assert.DoesNotContain(path, step => step.Direction.Contains("shift"));
         }
 
-        Assert.Equal("move", path[char.IsUpper(sequence[0]) ? 1 : 0].Direction);
-        Assert.Equal("press", path[char.IsUpper(sequence[0]) ? 2 : 1].Direction);
-        Assert.Equal("release", path[char.IsUpper(sequence[0]) ? 3 : 2].Direction);
+        // Verify standard steps
+        Assert.Equal("move", path[expectShiftSteps ? 1 : 0].Direction);
+        Assert.Equal("press", path[expectShiftSteps ? 2 : 1].Direction);
+        Assert.Equal("release", path[expectShiftSteps ? 3 : 2].Direction);
     }
 
     [Fact]
@@ -85,9 +91,9 @@ public class ShiftAwarePathFinderTests
         var path = _pathFinder.FindPath(sequence);
 
         // Assert
-        Assert.Equal(7, path.Count);
+        Assert.Equal(8, path.Count);
         Assert.Equal($"shift_down for 'A'", path[0].ToString());
-        Assert.Equal("shift_up", path[6].Direction);
+        Assert.Equal("shift_up", path[7].Direction);
     }
 
     [Fact]
@@ -117,7 +123,20 @@ public class ShiftAwarePathFinderTests
         var path = _pathFinder.FindPath(sequence);
 
         // Assert
-        Assert.Equal(sequence.Length * 4, path.Count); // 4 steps per character
-        Assert.Equal(sequence.Length, path.Count(s => s.Direction == "shift_down"));
+        Assert.Equal((sequence.Length * 3) + 2, path.Count);
+
+        // Verify shift steps
+        var shiftDownSteps = path.Count(s => s.Direction == "shift_down");
+        var shiftUpSteps = path.Count(s => s.Direction == "shift_up");
+
+        Assert.Equal(1, shiftDownSteps);
+        Assert.Equal(1, shiftUpSteps);
+
+        // Verify step sequence for a few characters
+        Assert.Equal("shift_down", path[0].Direction);
+        Assert.Equal("move", path[1].Direction);
+        Assert.Equal("press", path[2].Direction);
+        Assert.Equal("release", path[3].Direction);
+        Assert.Equal("shift_up", path[path.Count - 1].Direction);
     }
 }

@@ -66,8 +66,19 @@ public class ShiftAwarePathFinder
 
             path.AddRange(steps);
 
+            // If this is the last character and shift is active, add shift_up
+            if (i == sequence.Length - 1 && shiftActive)
+            {
+                path.Add(new PathStep(
+                    currentChar,
+                    "shift_up",
+                    isPress: true
+                ));
+                shiftActive = false;
+                currentShiftState = ShiftState.NoShift;
+            }
             // Release shift if no longer needed
-            if (shiftActive && !needsShift)
+            else if (shiftActive && !needsShift)
             {
                 path.Add(new PathStep(
                     currentChar,
@@ -108,6 +119,4 @@ public class ShiftAwarePathFinder
 
         return steps;
     }
-
-
 }
