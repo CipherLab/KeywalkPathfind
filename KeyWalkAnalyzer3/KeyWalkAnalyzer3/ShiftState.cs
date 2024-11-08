@@ -1,9 +1,8 @@
-namespace KeyboardPathAnalysis
+namespace KeyWalkAnalyzer3;
+
+public enum ShiftState
 {
-    public enum ShiftState
-    {
-        NoShift,
-        LeftShift,
-        RightShift,
-    }
+    NoShift,
+    LeftShift,
+    RightShift,
 }

@@ -1,4 +1,4 @@
-namespace KeyboardPathAnalysis;
+namespace KeyWalkAnalyzer3;
 public class AStar(KeyboardLayout keyboard)
 {
     private readonly KeyboardLayout keyboard = keyboard;

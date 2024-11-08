@@ -1,5 +1,5 @@
 using Xunit;
-using KeyboardPathAnalysis;
+using KeyWalkAnalyzer3;
 
 public class WeightedKeyboardLayoutTests
 {

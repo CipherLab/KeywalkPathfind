@@ -1,7 +1,7 @@
 // See https://aka.ms/new-console-template for more information
+using KeyWalkAnalyzer3;
 using System.Text;
 using System.Text.RegularExpressions;
-using KeyboardPathAnalysis;
 
 
 var pathAnalyzer = new PathAnalyzer();

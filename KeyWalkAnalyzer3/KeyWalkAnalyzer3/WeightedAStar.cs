@@ -1,32 +1,31 @@
-namespace KeyboardPathAnalysis
+namespace KeyWalkAnalyzer3;
+
+public class WeightedAStar(WeightedKeyboardLayout keyboard) : AStar(keyboard)
 {
-    public class WeightedAStar(WeightedKeyboardLayout keyboard) : AStar(keyboard)
+    private readonly WeightedKeyboardLayout weightedKeyboard = keyboard;
+
+    protected override double CalculateCost(char fromKey, char toKey)
     {
-        private readonly WeightedKeyboardLayout weightedKeyboard = keyboard;
+        return weightedKeyboard.GetMovementCost(fromKey, toKey);
+    }
 
-        protected override double CalculateCost(char fromKey, char toKey)
+    public override List<PathStep> FindPath(char startKey, char endKey)
+    {
+        var path = base.FindPath(startKey, endKey);
+
+        // Annotate path with effort metrics
+        double totalEffort = 0;
+        foreach (var step in path)
         {
-            return weightedKeyboard.GetMovementCost(fromKey, toKey);
-        }
-
-        public override List<PathStep> FindPath(char startKey, char endKey)
-        {
-            var path = base.FindPath(startKey, endKey);
-
-            // Annotate path with effort metrics
-            double totalEffort = 0;
-            foreach (var step in path)
+            if (!step.IsPress)
             {
-                if (!step.IsPress)
-                {
-                    totalEffort += weightedKeyboard.GetMovementCost(startKey, endKey);
-                }
+                totalEffort += weightedKeyboard.GetMovementCost(startKey, endKey);
             }
-
-            // Add effort metadata to path
-            path[0].Metadata["TotalEffort"] = totalEffort;
-
-            return path;
         }
+
+        // Add effort metadata to path
+        path[0].Metadata["TotalEffort"] = totalEffort;
+
+        return path;
     }
 }

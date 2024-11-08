@@ -1,6 +1,6 @@
 using Xunit;
-using KeyboardPathAnalysis;
 using System.Collections.Generic;
+using KeyWalkAnalyzer3;
 
 public class WeightedAStarTests
 {

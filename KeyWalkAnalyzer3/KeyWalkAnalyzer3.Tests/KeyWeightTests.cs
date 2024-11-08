@@ -1,8 +1,8 @@
 using Xunit;
-using KeyboardPathAnalysis;
 using System.Diagnostics;
 using Xunit.Abstractions;
-
+using KeyWalkAnalyzer3;
+namespace KeyWalkAnalyzer3;
 public class FingerStrengthTests(ITestOutputHelper output)
 {
     private readonly ITestOutputHelper _output = output;

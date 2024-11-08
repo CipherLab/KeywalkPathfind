@@ -1,4 +1,4 @@
-using KeyboardPathAnalysis;
+using KeyWalkAnalyzer3;
 
 public class KeyboardLayout
 {
