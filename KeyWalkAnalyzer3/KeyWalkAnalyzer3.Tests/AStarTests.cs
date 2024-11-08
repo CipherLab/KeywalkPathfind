@@ -32,9 +32,9 @@ public class AStarTests
     }
 
     [Theory]
-    [InlineData('a', 'a', 2)]  // Press + Release
-    [InlineData('a', 's', 3)]  // Release + Move + Press
-    [InlineData('q', 'p', 12)] // Release + 10 moves + Press
+    [InlineData('a', 'a', 2)] // Same key
+    [InlineData('a', 's', 3)] // Adjacent keys
+    [InlineData('q', 'p', 3)] // Far keys with core steps
     public void FindPath_ShouldReturnCorrectNumberOfSteps(char start, char end, int expectedSteps)
     {
         // Act
