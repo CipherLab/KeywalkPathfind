@@ -16,8 +16,8 @@ namespace KeyboardPathAnalysis
 
         public double CalculateMovementCost(KeyPosition from, KeyPosition to, ShiftState shiftState)
         {
-            var fromEnhanced = (EnhancedKeyPosition)from;
-            var toEnhanced = (EnhancedKeyPosition)to;
+            var fromEnhanced = from as EnhancedKeyPosition ?? CreateDefaultEnhancedKeyPosition(from);
+            var toEnhanced = to as EnhancedKeyPosition ?? CreateDefaultEnhancedKeyPosition(to);
 
             double cost = CalculateBaseCost(fromEnhanced, toEnhanced);
 
@@ -32,7 +32,7 @@ namespace KeyboardPathAnalysis
 
         public double CalculateKeyPressCost(KeyPosition key, ShiftState shiftState)
         {
-            var enhancedKey = (EnhancedKeyPosition)key;
+            var enhancedKey = key as EnhancedKeyPosition ?? CreateDefaultEnhancedKeyPosition(key);
             double cost = 1.0;
 
             // Base difficulty from finger strength and reach
@@ -56,6 +56,20 @@ namespace KeyboardPathAnalysis
             }
 
             return cost;
+        }
+
+        private EnhancedKeyPosition CreateDefaultEnhancedKeyPosition(KeyPosition key)
+        {
+            // Create a default EnhancedKeyPosition with minimal assumptions
+            return new EnhancedKeyPosition(
+                key.Row,
+                key.Col,
+                key.Key,
+                Hand.Right,  // Default to right hand
+                FingerStrength.Middle,  // Default to middle finger
+                0.5,  // Moderate reach difficulty
+                false  // Not home row by default
+            );
         }
 
         private double CalculateBaseCost(EnhancedKeyPosition from, EnhancedKeyPosition to)

@@ -15,10 +15,10 @@ namespace KeyboardPathAnalysis
             baseWeight *= (1 + ReachDifficulty);
 
             // Frequently used letters should have lower weights as they're more predictable
-            baseWeight *= (1 - (LanguageFrequency * 0.5));
+            baseWeight *= (1 - LanguageFrequency);
 
             // Stronger fingers make keys easier to press
-            baseWeight *= (5 - (int)Finger) / 4.0;
+            baseWeight *= (5 - (int)Finger) / 5.0;
 
             // Home row keys are easier to access
             if (IsHomeRow) baseWeight *= 0.8;

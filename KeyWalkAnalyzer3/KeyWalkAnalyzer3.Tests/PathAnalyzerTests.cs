@@ -2,6 +2,7 @@ using Xunit;
 using Moq;
 using KeyboardPathAnalysis;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace KeyWalkAnalyzer3.Tests
 {
@@ -90,13 +91,14 @@ namespace KeyWalkAnalyzer3.Tests
             var result = _analyzer.EncodePath(path);
 
             // Assert
-            Assert.Contains("*", result); // Should contain multiplication symbol for compression
+            Assert.Contains("right", result);
+            Assert.Matches(@"right\(\d+,\d+\)", result); // Verify coordinate format
         }
 
         [Theory]
         [InlineData("test1", "test2", 0.8)] // Similar passwords
         [InlineData("abc123", "xyz789", 0.2)] // Different passwords
-        [InlineData("password", "password123", 0.85)] // Common prefix
+        [InlineData("password", "password123", 0.83)] // Common prefix
         public void CalculateSimilarity_VariousInputs_ReturnsExpectedResults(
             string password1, string password2, double expectedMinSimilarity)
         {

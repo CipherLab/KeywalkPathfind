@@ -47,7 +47,7 @@ namespace KeyboardPathAnalysis
                 {
                     if (count > 1)
                     {
-                        optimized.Add(new PathStep($"{currentStep} * {count}"));
+                        optimized.Add(new PathStep($"{currentStep.Direction} * {count}", currentStep.IsPress));
                     }
                     else
                     {
@@ -123,12 +123,12 @@ namespace KeyboardPathAnalysis
                     currentPhrase.Append(path[j].ToString() + "|");
                     string phrase = currentPhrase.ToString();
 
-                    foreach (var entry in dictionary)
+                    if (dictionary.TryGetValue(phrase, out int position))
                     {
-                        if (entry.Key.StartsWith(phrase) && phrase.Length > maxMatch)
+                        if (phrase.Length > maxMatch)
                         {
                             maxMatch = phrase.Length;
-                            matchPosition = entry.Value;
+                            matchPosition = position;
                         }
                     }
                 }

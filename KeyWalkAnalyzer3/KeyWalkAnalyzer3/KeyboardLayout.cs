@@ -2,16 +2,15 @@ using KeyboardPathAnalysis;
 
 public class KeyboardLayout
 {
-    private Dictionary<char, KeyPosition> keyPositions;
-    private Dictionary<char, char> shiftVariants;
+    private Dictionary<char, KeyPosition> keyPositions = new Dictionary<char, KeyPosition>();
+    private Dictionary<char, char> shiftVariants = new Dictionary<char, char>();
     private static readonly string[] QWERTY_LAYOUT = new[]
     {
-            "1234567890-=",
-            "qwertyuiop[]",
-            "asdfghjkl;'",
-            "zxcvbnm,./"
-        };
-
+        "1234567890-=",
+        "qwertyuiop[]",
+        "asdfghjkl;'",
+        "zxcvbnm,./"
+    };
     public KeyboardLayout()
     {
         InitializeQwertyLayout();

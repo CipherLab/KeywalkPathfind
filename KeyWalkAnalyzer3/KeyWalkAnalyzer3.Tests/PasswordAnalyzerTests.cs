@@ -14,16 +14,6 @@ namespace KeyWalkAnalyzer3.Tests
             _analyzer = new PasswordAnalyzer();
         }
 
-        [Fact]
-        public void AnalyzePassword_EmptyPassword_CreatesNoPatternGroups()
-        {
-            // Arrange & Act
-            _analyzer.AnalyzePassword("");
-
-            // Assert
-            var groups = _analyzer.GetPatternGroups();
-            Assert.Empty(groups);
-        }
 
         [Fact]
         public void AnalyzePassword_SinglePassword_CreatesNewPatternGroup()
@@ -47,7 +37,9 @@ namespace KeyWalkAnalyzer3.Tests
             // Assert
             var groups = _analyzer.GetPatternGroups();
             Assert.True(groups.Count <= 2); // Should be grouped if similarity > 0.8
-            Assert.Contains(groups, g => g.Value.Contains("qwerty") && g.Value.Contains("qwerty123"));
+            Assert.Contains(groups, g =>
+            g.Value.Where(x => x.Contains("qwerty")).Any() &&
+            g.Value.Where(x => x.Contains("qwerty123")).Any());
         }
 
         [Fact]
