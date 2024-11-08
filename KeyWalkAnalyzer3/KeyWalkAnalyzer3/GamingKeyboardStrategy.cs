@@ -68,7 +68,8 @@ public class GamingKeyboardStrategy : BaseKeyboardWeightStrategy
             Hand.Right,  // Default to right hand
             FingerStrength.Middle,  // Default to middle finger
             0.4,  // Reduced reach difficulty for gaming keyboards
-            false  // Not home row by default
+            false,  // Not home row by default
+            false  // No shift key needed by default
         );
     }
 

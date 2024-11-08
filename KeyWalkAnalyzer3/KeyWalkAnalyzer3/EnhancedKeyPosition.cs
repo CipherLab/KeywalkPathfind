@@ -15,7 +15,8 @@ public class EnhancedKeyPosition : KeyPosition
         Hand preferredHand,
         FingerStrength finger,
         double reachDifficulty,
-        bool isHomeRow) : base(row, col, key)
+        bool isHomeRow,
+        bool v) : base(row, col, key)
     {
         PreferredHand = preferredHand;
         Finger = finger;

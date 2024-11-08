@@ -70,6 +70,7 @@ public class MobileKeyboardStrategy : BaseKeyboardWeightStrategy
             FingerStrength.Thumb,  // Thumb as primary typing finger
             0.6,  // Higher reach difficulty for mobile keyboards
             false  // Not home row by default
+            , false  // No shift key needed by default
         );
     }
 

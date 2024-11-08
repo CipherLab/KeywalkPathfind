@@ -52,6 +52,7 @@ public class StandardWeightStrategy : BaseKeyboardWeightStrategy
             FingerStrength.Middle,  // Default to middle finger
             0.5,  // Moderate reach difficulty
             false  // Not home row by default
+            , false  // No shift key needed by default
         );
     }
 
