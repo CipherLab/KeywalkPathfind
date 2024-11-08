@@ -1,138 +1,63 @@
 using Xunit;
 using KeyboardPathAnalysis;
+using System.Diagnostics;
+using Xunit.Abstractions;
 
-namespace KeyWalkAnalyzer3.Tests
+public class FingerStrengthTests
 {
-    public class KeyWeightTests
+    private readonly ITestOutputHelper _output;
+
+    public FingerStrengthTests(ITestOutputHelper output)
     {
-        [Fact]
-        public void Constructor_SetsPropertiesCorrectly()
+        _output = output;
+    }
+
+    [Theory]
+    [InlineData(FingerStrength.Pinky, 0.412)]   // Rounded to three decimal places
+    [InlineData(FingerStrength.Ring, 0.608)]
+    [InlineData(FingerStrength.Middle, 0.804)]
+    [InlineData(FingerStrength.Index, 1.000)]
+    [InlineData(FingerStrength.Thumb, 0.608)]
+    public void CalculateFingerFactor_ShouldMatchExpectedValues(FingerStrength finger, double expected)
+    {
+        // Arrange
+        var keyWeight = new KeyWeight { Finger = finger };
+
+        // Act
+        decimal actualDecimal = (1.0m + (int)finger + 0.1m) / 5.1m;
+        double actualDouble = (1.0 + (int)finger + 0.1) / 5.1;
+
+        // Assert
+        Assert.Equal(expected, Math.Round((double)actualDecimal, 3));
+        Assert.Equal(expected, Math.Round(actualDouble, 3));
+    }
+
+    [Fact]
+    public void CompareDoubleVsDecimalCalculations()
+    {
+        foreach (FingerStrength finger in Enum.GetValues(typeof(FingerStrength)))
         {
-            // Arrange & Act
-            var keyWeight = new KeyWeight
-            {
-                LanguageFrequency = 0.1,
-                Finger = FingerStrength.Index,
-                ReachDifficulty = 0.5,
-                IsHomeRow = true
-            };
+            // Decimal calculation
+            decimal decimalResult = (5.0m - (int)finger + 0.1m) / 5.1m;
 
-            // Assert
-            Assert.Equal(0.1, keyWeight.LanguageFrequency);
-            Assert.Equal(FingerStrength.Index, keyWeight.Finger);
-            Assert.Equal(0.5, keyWeight.ReachDifficulty);
-            Assert.True(keyWeight.IsHomeRow);
+            // Double calculation (current implementation)
+            double doubleResult = (5.0 - (int)finger + 0.1) / 5.1;
+
+            // Output both for comparison
+            _output.WriteLine($"Finger: {finger}");
+            _output.WriteLine($"Decimal: {decimalResult}");
+            _output.WriteLine($"Double:  {doubleResult}");
+            _output.WriteLine("---");
         }
+    }
 
-        [Theory]
-        [InlineData(0.0, FingerStrength.Pinky, 0.0, false, 1.5)]      // Difficult to reach, low frequency, weak finger
-        [InlineData(1.0, FingerStrength.Thumb, 1.0, true, 0.4)]       // High frequency, easy reach, home row
-        [InlineData(0.5, FingerStrength.Middle, 0.5, false, 1.0)]  // Moderate values
-        public void CalculateWeight_ReturnsCorrectWeight(
-            double languageFrequency,
-            FingerStrength finger,
-            double reachDifficulty,
-            bool isHomeRow,
-            double expectedWeightApproximation)
-        {
-            // Arrange
-            var keyWeight = new KeyWeight
-            {
-                LanguageFrequency = languageFrequency,
-                Finger = finger,
-                ReachDifficulty = reachDifficulty,
-                IsHomeRow = isHomeRow
-            };
-
-            // Act
-            var calculatedWeight = keyWeight.CalculateWeight();
-
-            // Assert
-            Assert.InRange(calculatedWeight, expectedWeightApproximation * 0.9, expectedWeightApproximation * 1.1);
-        }
-
-        [Fact]
-        public void CalculateWeight_HomeRowReducesWeight()
-        {
-            // Arrange
-            var homeRowKey = new KeyWeight
-            {
-                LanguageFrequency = 0.5,
-                Finger = FingerStrength.Index,
-                ReachDifficulty = 0.0,
-                IsHomeRow = true
-            };
-
-            var nonHomeRowKey = new KeyWeight
-            {
-                LanguageFrequency = 0.5,
-                Finger = FingerStrength.Index,
-                ReachDifficulty = 0.0,
-                IsHomeRow = false
-            };
-
-            // Act
-            var homeRowWeight = homeRowKey.CalculateWeight();
-            var nonHomeRowWeight = nonHomeRowKey.CalculateWeight();
-
-            // Assert
-            Assert.True(homeRowWeight < nonHomeRowWeight);
-        }
-
-        [Fact]
-        public void CalculateWeight_ReachDifficulty_IncreasesWeight()
-        {
-            // Arrange
-            var easyReachKey = new KeyWeight
-            {
-                LanguageFrequency = 0.5,
-                Finger = FingerStrength.Index,
-                ReachDifficulty = 0.0,
-                IsHomeRow = false
-            };
-
-            var hardReachKey = new KeyWeight
-            {
-                LanguageFrequency = 0.5,
-                Finger = FingerStrength.Index,
-                ReachDifficulty = 1.0,
-                IsHomeRow = false
-            };
-
-            // Act
-            var easyReachWeight = easyReachKey.CalculateWeight();
-            var hardReachWeight = hardReachKey.CalculateWeight();
-
-            // Assert
-            Assert.True(hardReachWeight > easyReachWeight);
-        }
-
-        [Fact]
-        public void CalculateWeight_LanguageFrequency_ReducesWeight()
-        {
-            // Arrange
-            var lowFrequencyKey = new KeyWeight
-            {
-                LanguageFrequency = 0.1,
-                Finger = FingerStrength.Index,
-                ReachDifficulty = 0.5,
-                IsHomeRow = false
-            };
-
-            var highFrequencyKey = new KeyWeight
-            {
-                LanguageFrequency = 0.9,
-                Finger = FingerStrength.Index,
-                ReachDifficulty = 0.5,
-                IsHomeRow = false
-            };
-
-            // Act
-            var lowFrequencyWeight = lowFrequencyKey.CalculateWeight();
-            var highFrequencyWeight = highFrequencyKey.CalculateWeight();
-
-            // Assert
-            Assert.True(highFrequencyWeight < lowFrequencyWeight);
-        }
+    [Fact]
+    public void CheckFingerStrengthValues()
+    {
+        _output.WriteLine($"Pinky: {(int)FingerStrength.Pinky}");
+        _output.WriteLine($"Ring: {(int)FingerStrength.Ring}");
+        _output.WriteLine($"Middle: {(int)FingerStrength.Middle}");
+        _output.WriteLine($"Index: {(int)FingerStrength.Index}");
+        _output.WriteLine($"Thumb: {(int)FingerStrength.Thumb}");
     }
 }

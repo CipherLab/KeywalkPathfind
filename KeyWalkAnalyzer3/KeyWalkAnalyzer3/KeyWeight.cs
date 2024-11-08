@@ -14,11 +14,11 @@ namespace KeyboardPathAnalysis
             // Harder to reach keys should have higher weights
             baseWeight *= (1 + ReachDifficulty);
 
-            // Frequently used letters should have lower weights as they're more predictable
+            // Frequently used letters should have lower weights
             baseWeight *= (1 - LanguageFrequency);
 
             // Stronger fingers make keys easier to press
-            baseWeight *= (5 - (int)Finger) / 5.0;
+            baseWeight *= (1.0 + (int)Finger + 0.1) / 5.1; // Reversed to match enum values
 
             // Home row keys are easier to access
             if (IsHomeRow) baseWeight *= 0.8;
