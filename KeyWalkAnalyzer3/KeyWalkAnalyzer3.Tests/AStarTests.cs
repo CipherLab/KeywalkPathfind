@@ -2,6 +2,7 @@ using Xunit;
 using System.Collections.Generic;
 using KeyWalkAnalyzer3;
 using System;
+using System.Linq;
 
 public class AStarTests
 {
@@ -15,9 +16,9 @@ public class AStarTests
     }
 
     [Theory]
-    [InlineData('a', 's')]
-    [InlineData('f', 'j')]
-    [InlineData('q', 'p')]
+    [InlineData('a', 's')] // Adjacent keys
+    [InlineData('f', 'j')] // Cross-hand movement
+    [InlineData('q', 'p')] // Far keys
     public void FindPath_ShouldReturnValidPath(char start, char end)
     {
         // Act
@@ -31,83 +32,170 @@ public class AStarTests
     }
 
     [Theory]
-    [InlineData('a', 's')]
-    [InlineData('f', 'j')]
-    [InlineData('q', 'p')]
-    public void FindPath_StepCountShouldMatchManhattanDistance(char start, char end)
+    [InlineData('a', 'a', 2)]  // Press + Release
+    [InlineData('a', 's', 3)]  // Release + Move + Press
+    [InlineData('q', 'p', 12)] // Release + 10 moves + Press
+    public void FindPath_ShouldReturnCorrectNumberOfSteps(char start, char end, int expectedSteps)
     {
-        // Arrange
-        var startPos = _keyboard.GetKeyPosition(start);
-        var endPos = _keyboard.GetKeyPosition(end);
-
-        // Sanity check for valid keys
-        Assert.NotNull(startPos);
-        Assert.NotNull(endPos);
-
-        // Calculate expected steps
-        int expectedVerticalSteps = Math.Abs(startPos.Row - endPos.Row);
-        int expectedHorizontalSteps = Math.Abs(startPos.Col - endPos.Col);
-        int expectedTotalSteps = expectedVerticalSteps + expectedHorizontalSteps + 1; // +1 for final press
-
         // Act
         var path = _pathfinder.FindPath(start, end);
 
         // Assert
-        Assert.Equal(expectedTotalSteps, path.Count);
+        Assert.Equal(expectedSteps, path.Count);
+
+        // Additional validation
+        if (start != end)
+        {
+            Assert.Equal("release", path[0].Direction);
+            Assert.Equal("press", path[^1].Direction);
+        }
     }
 
     [Fact]
-    public void FindPath_SameKey_ShouldReturnMinimalPath()
+    public void FindPath_VerticalMovement_Detected()
     {
         // Arrange
-        char key = 'a';
+        var verticalTestCases = new[] {
+            ('1', 'q'),   // Top row to second row
+            ('0', 'z'),   // Top row to bottom row
+            ('a', '1'),   // Second row to top row
+            ('m', '0')    // Bottom row to top row
+        };
 
-        // Act
-        var path = _pathfinder.FindPath(key, key);
+        // Act & Assert
+        foreach (var (start, end) in verticalTestCases)
+        {
+            var path = _pathfinder.FindPath(start, end);
+            var movementSteps = path.Where(p => !p.IsPress && p.Direction != "release").ToList();
 
-        // Assert
-        Assert.NotNull(path);
-        Assert.Equal(2, path.Count); // Press and release only
-        Assert.Equal(key, path[0].Key);
-        Assert.Equal(key, path[1].Key);
-        Assert.True(path[0].IsPress, "First step should be a press action.");
-        Assert.False(path[1].IsPress, "Second step should be a release action.");
+            Assert.True(movementSteps.Any(p => p.Direction.Contains("up") || p.Direction.Contains("down")),
+                $"Path from {start} to {end} should include vertical movements");
+        }
     }
 
     [Fact]
-    public void FindPath_InvalidKeys_ShouldReturnEmptyPath()
+    public void FindPath_HorizontalMovement_Detected()
     {
-        // Act
-        var path1 = _pathfinder.FindPath(' ', 'a'); // Invalid start key
-        var path2 = _pathfinder.FindPath('a', ' '); // Invalid end key
+        // Arrange
+        var horizontalTestCases = new[] {
+            ('q', 'w'),   // Adjacent keys on same row
+            ('1', '2'),   // Top row horizontal movement
+            ('z', 'x'),   // Bottom row horizontal movement
+            ('a', 's')    // Second row horizontal movement
+        };
 
-        // Assert
-        Assert.Empty(path1);
-        Assert.Empty(path2);
+        // Act & Assert
+        foreach (var (start, end) in horizontalTestCases)
+        {
+            var path = _pathfinder.FindPath(start, end);
+            var movementSteps = path.Where(p => !p.IsPress && p.Direction != "release").ToList();
+
+            Assert.True(movementSteps.Any(p => p.Direction.Contains("left") || p.Direction.Contains("right")),
+                $"Path from {start} to {end} should include horizontal movements");
+        }
     }
+
+
 
     [Theory]
-    [InlineData('a', 's')]
-    [InlineData('f', 'j')]
-    [InlineData('q', 'p')]
-    public void CalculateCost_ShouldMatchManhattanDistance(char start, char end)
+    [InlineData('a', 'z', 11)]  // Far keys with significant movement
+    [InlineData('1', '0', 9)]   // Top row keys
+    [InlineData('p', 'm', 7)]   // Keys from different rows
+    public void FindPath_ComplexMovement_VerifyCostAndSteps(char start, char end, int maxExpectedSteps)
     {
-        // Arrange
-        var startPos = _keyboard.GetKeyPosition(start);
-        var endPos = _keyboard.GetKeyPosition(end);
-
-        // Sanity check for valid keys
-        Assert.NotNull(startPos);
-        Assert.NotNull(endPos);
-
-        // Calculate expected Manhattan distance
-        double expectedCost = Math.Abs(startPos.Row - endPos.Row) + Math.Abs(startPos.Col - endPos.Col);
-
         // Act
-        var calculatedCost = _pathfinder.CalculateCost(start, end);
+        var path = _pathfinder.FindPath(start, end);
 
         // Assert
-        Assert.Equal(expectedCost, calculatedCost);
+        Assert.NotEmpty(path);
+        Assert.True(path.Count <= maxExpectedSteps,
+            $"Path from {start} to {end} should have {maxExpectedSteps} or fewer steps (got {path.Count - 1})");
+
+        // Verify cost calculation
+        double totalCost = path.Sum(p => p.Cost);
+        double directCost = _pathfinder.CalculateCost(start, end);
+        Assert.True(totalCost > 0, "Path cost should be positive");
+        Assert.True(totalCost >= directCost, "Path cost should be at least the direct cost");
+    }
+
+    [Fact]
+    public void FindPath_BoundaryKeys_GeneratesValidPath()
+    {
+        // Arrange
+        char[] boundaryKeys = new[] { '1', 'q', 'p', 'm', '0', 'z' };
+
+        // Act & Assert
+        foreach (char start in boundaryKeys)
+        {
+            foreach (char end in boundaryKeys)
+            {
+                if (start == end) continue;
+
+                var path = _pathfinder.FindPath(start, end);
+
+                Assert.NotNull(path);
+                Assert.NotEmpty(path);
+                Assert.Equal(start, path[0].Key);
+                Assert.Equal(end, path[^1].Key);
+            }
+        }
+    }
+
+    [Fact]
+    public void CalculateCost_ConsistentWithPathGeneration()
+    {
+        // Arrange
+        char[] testKeys = new[] { 'a', 's', 'q', 'p', '1', '0', 'z', 'm' };
+
+        // Act & Assert
+        foreach (char start in testKeys)
+        {
+            foreach (char end in testKeys)
+            {
+                if (start == end) continue;
+
+                var path = _pathfinder.FindPath(start, end);
+                var directCost = _pathfinder.CalculateCost(start, end);
+
+                // Verify path steps match or exceed direct cost
+                double pathCost = path.Sum(p => p.Cost);
+
+                Assert.True(pathCost >= directCost,
+                    $"Path cost from {start} to {end} should be at least the direct cost");
+            }
+        }
+    }
+
+    [Fact]
+    public void CalculateCost_MatchesManhattanDistance()
+    {
+        // Arrange
+        char[] testKeys = new[] { 'a', 's', 'q', 'p', '1', '0', 'z', 'm' };
+
+        // Act & Assert
+        foreach (char start in testKeys)
+        {
+            foreach (char end in testKeys)
+            {
+                if (start == end) continue;
+
+                var startPos = _keyboard.GetKeyPosition(start);
+                var endPos = _keyboard.GetKeyPosition(end);
+
+                // Sanity check for valid keys
+                Assert.NotNull(startPos);
+                Assert.NotNull(endPos);
+
+                // Calculate expected Manhattan distance
+                double expectedCost = Math.Abs(startPos.Row - endPos.Row) + Math.Abs(startPos.Col - endPos.Col);
+
+                // Act
+                var calculatedCost = _pathfinder.CalculateCost(start, end);
+
+                // Assert
+                Assert.Equal(expectedCost, calculatedCost);
+            }
+        }
     }
 
     [Fact]

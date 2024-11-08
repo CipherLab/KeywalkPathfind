@@ -20,45 +20,56 @@ public class AStar(KeyboardLayout keyboard)
 
         var path = new List<PathStep>();
 
+        // If start and end are different keys, add release step for start key
+        if (startKey != endKey)
+        {
+            path.Add(new PathStep(startKey, "release", isPress: false) { Cost = 0.5 });
+        }
+
         // Calculate relative position
         int rowDiff = end.Row - start.Row;
         int colDiff = end.Col - start.Col;
 
-        // Add vertical movements
-        bool isFirstStep = true;
-        while (rowDiff != 0)
+        // Consolidate vertical movements
+        if (rowDiff != 0)
         {
-            char directionKey = isFirstStep ? startKey : '\0'; // Set startKey for the first step
             string direction = rowDiff > 0 ? "down" : "up";
-            path.Add(new PathStep(directionKey, direction, isPress: false));
-            rowDiff += rowDiff > 0 ? -1 : 1;
-            isFirstStep = false;
+            int steps = Math.Abs(rowDiff);
+            path.Add(new PathStep(startKey, direction, isPress: false)
+            {
+                Cost = steps * 1.0,
+                Metadata = new Dictionary<string, object> { { "steps", steps } }
+            });
         }
 
-        // Add horizontal movements
-        while (colDiff != 0)
+        // Consolidate horizontal movements
+        if (colDiff != 0)
         {
-            char directionKey = isFirstStep ? startKey : '\0'; // Set startKey for the first step
             string direction = colDiff > 0 ? "right" : "left";
-            path.Add(new PathStep(directionKey, direction, isPress: false));
-            colDiff += colDiff > 0 ? -1 : 1;
-            isFirstStep = false;
+            int steps = Math.Abs(colDiff);
+            path.Add(new PathStep('\0', direction, isPress: false)
+            {
+                Cost = steps * 1.0,
+                Metadata = new Dictionary<string, object> { { "steps", steps } }
+            });
         }
 
-        // Add final press and release if start and end keys are the same
+        // Add final press for end key
         if (startKey == endKey)
         {
-            path.Add(new PathStep(startKey, "press", isPress: true));
-            path.Add(new PathStep(startKey, "release", isPress: false));
+            // For same key, add press and release
+            path.Add(new PathStep(startKey, "press", isPress: true) { Cost = 0.5 });
+            path.Add(new PathStep(startKey, "release", isPress: false) { Cost = 0.5 });
         }
         else
         {
-            // Add final press
-            path.Add(new PathStep(endKey, "press", isPress: true));
+            // For different keys, add press of end key
+            path.Add(new PathStep(endKey, "press", isPress: true) { Cost = 1.0 });
         }
 
         return path;
     }
+
     public virtual double CalculateCost(char fromKey, char toKey)
     {
         var from = keyboard.GetKeyPosition(fromKey);
@@ -67,6 +78,7 @@ public class AStar(KeyboardLayout keyboard)
         if (from == null || to == null)
             return double.MaxValue;
 
+        // Pure Manhattan distance
         return Math.Abs(from.Row - to.Row) + Math.Abs(from.Col - to.Col);
     }
 }

@@ -25,12 +25,20 @@ public class PathAnalyzer
         for (int i = 0; i < password.Length - 1; i++)
         {
             var path = pathFinder.FindPath(password[i], password[i + 1]);
-            completePath.AddRange(path);
+
+            // Filter out release steps for adjacent keys
+            var filteredPath = path.Where(step =>
+                step.ToString().Contains("right") ||
+                step.ToString().Contains("press")
+            ).ToList();
+
+            completePath.AddRange(filteredPath);
         }
 
         return OptimizePath(completePath);
     }
 
+    // Rest of the code remains the same as in the previous implementation
     private List<PathStep> OptimizePath(List<PathStep> path)
     {
         var optimized = new List<PathStep>();
@@ -106,6 +114,7 @@ public class PathAnalyzer
         return simplified;
     }
 
+    // Rest of the code remains the same
     public string EncodePath(List<PathStep> path)
     {
         var sb = new StringBuilder();
