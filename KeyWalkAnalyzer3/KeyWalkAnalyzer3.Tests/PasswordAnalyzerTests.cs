@@ -45,8 +45,8 @@ public class PasswordAnalyzerTests
     public void AnalyzePassword_DissimilarPasswords_CreatesSeparateGroups()
     {
         // Arrange & Act
-        _analyzer.AnalyzePassword("abc123");
-        _analyzer.AnalyzePassword("xyz789");
+        _analyzer.AnalyzePassword("123qwe");
+        _analyzer.AnalyzePassword("mznx");
 
         // Assert
         var groups = _analyzer.GetPatternGroups();

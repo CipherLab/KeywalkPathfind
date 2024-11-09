@@ -52,4 +52,48 @@ public class PathStepTests
         // Assert
         Assert.Equal("left", stepString);
     }
+
+    [Fact]
+    public void IncrementRedundantMoveCount_InitializesAndIncrementsCorrectly()
+    {
+        // Arrange
+        var step = new PathStep('a', "up");
+
+        // Act
+        step.IncrementRedundantMoveCount();
+
+        // Assert
+        Assert.Equal(1, step.GetRedundantMoveCount());
+
+        // Act
+        step.IncrementRedundantMoveCount();
+
+        // Assert
+        Assert.Equal(2, step.GetRedundantMoveCount());
+    }
+
+    [Fact]
+    public void GetRedundantMoveCount_ReturnsZeroByDefault()
+    {
+        // Arrange
+        var step = new PathStep('a', "up");
+
+        // Act & Assert
+        Assert.Equal(0, step.GetRedundantMoveCount());
+    }
+
+    [Fact]
+    public void Metadata_StoresRedundantMoveCount()
+    {
+        // Arrange
+        var step = new PathStep('a', "up");
+
+        // Act
+        step.IncrementRedundantMoveCount();
+        step.IncrementRedundantMoveCount();
+
+        // Assert
+        Assert.True(step.Metadata.ContainsKey("RedundantMoveCount"));
+        Assert.Equal(2, step.Metadata["RedundantMoveCount"]);
+    }
 }

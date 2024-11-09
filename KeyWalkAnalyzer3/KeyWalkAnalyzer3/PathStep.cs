@@ -17,6 +17,22 @@ public class PathStep
         Metadata = new Dictionary<string, object>();
     }
 
+    public void IncrementRedundantMoveCount()
+    {
+        if (!Metadata.ContainsKey("RedundantMoveCount"))
+        {
+            Metadata["RedundantMoveCount"] = 0;
+        }
+        Metadata["RedundantMoveCount"] = (int)Metadata["RedundantMoveCount"] + 1;
+    }
+
+    public int GetRedundantMoveCount()
+    {
+        return Metadata.ContainsKey("RedundantMoveCount")
+            ? (int)Metadata["RedundantMoveCount"]
+            : 0;
+    }
+
     public override string ToString()
     {
         if (Direction.StartsWith("shift"))

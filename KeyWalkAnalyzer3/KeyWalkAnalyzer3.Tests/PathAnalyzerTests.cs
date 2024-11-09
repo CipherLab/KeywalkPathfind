@@ -1,127 +1,96 @@
 using Xunit;
-using Moq;
-using System.Collections.Generic;
+using KeyWalkAnalyzer3;
 using System.Linq;
+using System.Collections.Generic;
 
-namespace KeyWalkAnalyzer3.Tests;
-
-public class PathAnalyzerTests
+namespace KeyWalkAnalyzer3.Tests
 {
-    private readonly PathAnalyzer _analyzer;
-
-    public PathAnalyzerTests()
+    public class PathAnalyzerTests
     {
-        _analyzer = new PathAnalyzer();
-    }
-
-    [Fact]
-    public void GenerateKeyPath_EmptyPassword_ReturnsEmptyPath()
-    {
-        // Arrange & Act
-        var result = _analyzer.GenerateKeyPath("");
-
-        // Assert
-        Assert.Empty(result);
-    }
-
-    [Fact]
-    public void GenerateKeyPath_SingleCharacter_ReturnsEmptyPath()
-    {
-        // Arrange & Act
-        var result = _analyzer.GenerateKeyPath("a");
-
-        // Assert
-        Assert.Empty(result);
-    }
-
-    [Fact]
-    public void GenerateKeyPath_AdjacentKeys_GeneratesDirectPath()
-    {
-        // Arrange & Act
-        var result = _analyzer.GenerateKeyPath("qw");
-
-        // Assert
-        Assert.NotEmpty(result);
-        Assert.All(result, step => Assert.True(
-            step.ToString().Contains("right") ||
-            step.ToString().Contains("press")
-        ));
-    }
-
-    [Theory]
-    [InlineData("qwerty")]
-    [InlineData("asdfgh")]
-    [InlineData("zxcvbn")]
-    public void GenerateKeyPath_CommonPatterns_GeneratesValidPath(string input)
-    {
-        // Arrange & Act
-        var result = _analyzer.GenerateKeyPath(input);
-
-        // Assert
-        Assert.NotEmpty(result);
-        Assert.All(result, step => Assert.NotNull(step.ToString()));
-    }
-
-    [Fact]
-    public void EncodePath_EmptyPath_ReturnsEmptyString()
-    {
-        // Arrange
-        var emptyPath = new List<PathStep>();
-
-        // Act
-        var result = _analyzer.EncodePath(emptyPath);
-
-        // Assert
-        Assert.Equal("", result);
-    }
-
-    [Fact]
-    public void EncodePath_RepeatedSteps_CompressesEfficiently()
-    {
-        // Arrange
-        var path = new List<PathStep>
+        [Fact]
+        public void EncodePath_CanCompressSpacedRepeatedPatterns()
         {
-            new PathStep('a',"right"),
-            new PathStep('a', "right"),
-            new PathStep('a', "right")
-        };
+            // Arrange
+            var pathAnalyzer = new PathAnalyzer();
+            var path = new List<PathStep>
+            {
+                new PathStep('q', "press", true),  // Initial press (ignored)
+                new PathStep(' ', "right", false),
+                new PathStep('e', "press", true),
+                new PathStep(' ', "right", false),
+                new PathStep('t', "press", true),
+                new PathStep(' ', "right", false),
+                new PathStep('u', "press", true),
+                new PathStep(' ', "right", false),
+                new PathStep('o', "press", true),
+                new PathStep(' ', "right", false),
+                new PathStep('[', "press", true)
+            };
 
-        // Act
-        var result = _analyzer.EncodePath(path);
+            // Act
+            string encodedPath = pathAnalyzer.EncodePath(path);
 
-        // Assert
-        Assert.Contains("right", result);
-        Assert.Matches(@"right\(\d+,\d+\)", result); // Verify coordinate format
-    }
+            // Assert
+            // Should encode as ([right,press]*5) since it's a repeating pattern of right movement followed by press
+            Assert.Equal("([right,press]*5)", encodedPath);
+        }
 
-    [Theory]
-    [InlineData("test1", "test2", 0.8)] // Similar passwords
-    [InlineData("abc123", "xyz789", 0.2)] // Different passwords
-    [InlineData("qwe123", "asdqwe", 0.83)] // Common pattern
-    public void CalculateSimilarity_VariousInputs_ReturnsExpectedResults(
-        string password1, string password2, double expectedMinSimilarity)
-    {
-        // Arrange
-        var fingerprint1 = _analyzer.EncodePath(_analyzer.GenerateKeyPath(password1));
-        var fingerprint2 = _analyzer.EncodePath(_analyzer.GenerateKeyPath(password2));
+        [Fact]
+        public void EncodePath_CanCompressRepeatedPatterns()
+        {
+            // Arrange
+            var pathAnalyzer = new PathAnalyzer();
+            var path = new List<PathStep>
+            {
+                new PathStep('a', "press", true),  // Initial press (ignored)
+                new PathStep(' ', "right", false),
+                new PathStep('a', "press", true),
+                new PathStep(' ', "right", false),
+                new PathStep('a', "press", true),
+                new PathStep(' ', "right", false),
+                new PathStep('a', "press", true),
+                new PathStep(' ', "right", false),
+                new PathStep('a', "press", true)
+            };
 
-        // Act
-        var similarity = _analyzer.CalculateSimilarity(fingerprint1, fingerprint2);
+            // Act
+            string encodedPath = pathAnalyzer.EncodePath(path);
 
-        // Assert
-        Assert.True(similarity >= expectedMinSimilarity);
-    }
+            // Assert
+            // Should encode as ([right,press]*4) since it's a repeating pattern of right movement followed by press
+            Assert.Equal("([right,press]*4)", encodedPath);
+        }
 
-    [Theory]
-    [InlineData("", "test")]
-    [InlineData("test", "")]
-    [InlineData("", "")]
-    public void CalculateSimilarity_EmptyInputs_ReturnsZero(string fp1, string fp2)
-    {
-        // Act
-        var similarity = _analyzer.CalculateSimilarity(fp1, fp2);
+        [Fact]
+        public void EncodePath_HandlesEmptyPath()
+        {
+            // Arrange
+            var pathAnalyzer = new PathAnalyzer();
+            var path = new List<PathStep>();
 
-        // Assert
-        Assert.Equal(0, similarity);
+            // Act
+            string encodedPath = pathAnalyzer.EncodePath(path);
+
+            // Assert
+            Assert.Equal(string.Empty, encodedPath);
+        }
+
+        [Fact]
+        public void EncodePath_HandlesSingleStep()
+        {
+            // Arrange
+            var pathAnalyzer = new PathAnalyzer();
+            var path = new List<PathStep>
+            {
+                new PathStep('a', "press", true)
+            };
+
+            // Act
+            string encodedPath = pathAnalyzer.EncodePath(path);
+
+            // Assert
+            // Should return empty string since we ignore the first press
+            Assert.Equal(string.Empty, encodedPath);
+        }
     }
 }

@@ -1,6 +1,7 @@
 // Updated PathAnalyzer.cs
 
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace KeyWalkAnalyzer3;
 
@@ -38,7 +39,67 @@ public class PathAnalyzer
         return OptimizePath(completePath);
     }
 
-    // Rest of the code remains the same as in the previous implementation
+    public string GeneratePasswordFromPattern(string fingerprint, char startChar)
+    {
+        var sb = new StringBuilder();
+        sb.Append(startChar);
+        var currentChar = startChar;
+
+        // Split the fingerprint into individual steps
+        var steps = Regex.Split(fingerprint, @"(?=press|right|left|up|down)")
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .ToList();
+
+        foreach (var step in steps)
+        {
+            if (step.Contains("(")) continue; // Skip encoded references
+
+            if (step.Contains("down"))
+            {
+                try
+                {
+                    currentChar = keyboard.GetVerticalNeighbor(currentChar, 1);
+                    sb.Append(currentChar);
+                }
+                catch { break; }
+            }
+            else if (step.Contains("up"))
+            {
+                try
+                {
+                    currentChar = keyboard.GetVerticalNeighbor(currentChar, -1);
+                    sb.Append(currentChar);
+                }
+                catch { break; }
+            }
+            else if (step.Contains("left"))
+            {
+                var neighbors = keyboard.GetHorizontalNeighbors(currentChar);
+                if (neighbors.Count > 0 && neighbors[0] != currentChar)
+                {
+                    currentChar = neighbors[0];
+                    sb.Append(currentChar);
+                }
+            }
+            else if (step.Contains("right"))
+            {
+                var neighbors = keyboard.GetHorizontalNeighbors(currentChar);
+                if (neighbors.Count > 1)
+                {
+                    currentChar = neighbors[1];
+                    sb.Append(currentChar);
+                }
+                else if (neighbors.Count > 0)
+                {
+                    currentChar = neighbors[0];
+                    sb.Append(currentChar);
+                }
+            }
+        }
+
+        return sb.ToString();
+    }
+
     private List<PathStep> OptimizePath(List<PathStep> path)
     {
         var optimized = new List<PathStep>();
@@ -100,6 +161,10 @@ public class PathAnalyzer
                 {
                     if (path[i + 1].Direction == opposite)
                     {
+                        // Track redundant move
+                        path[i].IncrementRedundantMoveCount();
+                        path[i + 1].IncrementRedundantMoveCount();
+
                         i++; // Skip both moves
                         continue;
                     }
@@ -114,7 +179,6 @@ public class PathAnalyzer
         return simplified;
     }
 
-    // Rest of the code remains the same
     public string EncodePath(List<PathStep> path)
     {
         var sb = new StringBuilder();

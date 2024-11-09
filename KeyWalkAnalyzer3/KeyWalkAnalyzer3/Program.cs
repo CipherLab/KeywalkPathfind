@@ -1,43 +1,35 @@
-// See https://aka.ms/new-console-template for more information
 using KeyWalkAnalyzer3;
 using System.Text;
 using System.Text.RegularExpressions;
 
-
 var pathAnalyzer = new PathAnalyzer();
 var passwordAnalyzer = new PasswordAnalyzer();
 
-// Test password
-string password = "Hello123";
-Console.WriteLine($"Original password: {password}");
+// Test different keyboard walks
+string[] keyWalks = new[] {
+    "123qwe",  // Diagonal walk down
+};
 
-// Generate path and fingerprint
-var path = pathAnalyzer.GenerateKeyPath(password);
-var fingerprint = pathAnalyzer.EncodePath(path);
-Console.WriteLine($"Generated fingerprint: {fingerprint}");
+Console.WriteLine("Password Generation from Fingerprints:\n");
 
-// Store in analyzer for pattern matching
-passwordAnalyzer.AnalyzePassword(password);
-
-// Get pattern groups to see similar patterns
-var patternGroups = passwordAnalyzer.GetPatternGroups();
-
-Console.WriteLine("\nPattern Groups:");
-foreach (var group in patternGroups)
+foreach (var password in keyWalks)
 {
-    Console.WriteLine($"Pattern: {group.Key}");
-    Console.WriteLine($"Passwords: {string.Join(", ", group.Value)}");
-}
+    Console.WriteLine($"Original Password: {password}");
 
-// You can add more test passwords to see pattern matching
-passwordAnalyzer.AnalyzePassword("Hello456");
-passwordAnalyzer.AnalyzePassword("HelloABC");
+    // Generate path and fingerprint
+    var path = pathAnalyzer.GenerateKeyPath(password);
+    var fingerprint = pathAnalyzer.EncodePath(path);
+    Console.WriteLine($"Fingerprint: {fingerprint}");
 
-// Print updated groups
-Console.WriteLine("\nUpdated Pattern Groups:");
-patternGroups = passwordAnalyzer.GetPatternGroups();
-foreach (var group in patternGroups)
-{
-    Console.WriteLine($"Pattern: {group.Key}");
-    Console.WriteLine($"Passwords: {string.Join(", ", group.Value)}");
+    // Generate new passwords from different starting points using the same pattern
+    Console.WriteLine("\nGenerated passwords from different starting points:");
+
+    char[] startingChars = new[] { 'q', '1', 'a', 'z' };
+    foreach (var startChar in startingChars)
+    {
+        var generatedPassword = pathAnalyzer.GeneratePasswordFromPattern(fingerprint, startChar);
+        Console.WriteLine($"Starting from '{startChar}': {generatedPassword}");
+    }
+
+    Console.WriteLine("\n-------------------\n");
 }
