@@ -50,7 +50,7 @@ class Program
                 ▲▼	hyhyhy
                 →►←◄	hkhkhk
             */
-            args = new string[] { "generate", "--command", "►", "--length", "12", "--starting-point", "h" };
+            args = new string[] { "generate", "--command", "→►", "--length", "6", "--starting-point", "s" };
         }
 
         return await Parser.Default.ParseArguments<ProcessOptions, GenerateOptions>(args)

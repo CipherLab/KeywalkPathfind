@@ -54,66 +54,6 @@ public class PasswordAnalyzer
         _patternGroups,
         _path);
 
-    private char GetNextCharInRow(char currentChar, bool goingRight)
-    {
-        var pos = _keyboard.GetKeyPosition(currentChar);
-        if (pos == null) return currentChar;
-
-        // Get the row from QWERTY layout
-        var row = pos.Row switch
-        {
-            0 => "1234567890-=",
-            1 => "qwertyuiop[]",
-            2 => "asdfghjkl;'",
-            3 => "zxcvbnm,./",
-            _ => ""
-        };
-
-        int currentIndex = row.IndexOf(currentChar);
-        if (currentIndex == -1) return currentChar;
-
-        if (goingRight)
-        {
-            // Move right, wrap around to start if at end
-            return currentIndex < row.Length - 1 ? row[currentIndex + 1] : row[0];
-        }
-        else
-        {
-            // Move left, wrap around to end if at start
-            return currentIndex > 0 ? row[currentIndex - 1] : row[row.Length - 1];
-        }
-    }
-
-    private char GetNextCharInColumn(char currentChar, bool goingDown)
-    {
-        var pos = _keyboard.GetKeyPosition(currentChar);
-        if (pos == null) return currentChar;
-
-        // Get the column from QWERTY layout
-        var column = pos.Col switch
-        {
-            0 => "1234567890-=",
-            1 => "qwertyuiop[]",
-            2 => "asdfghjkl;'",
-            3 => "zxcvbnm,./",
-            _ => ""
-        };
-
-        int currentIndex = column.IndexOf(currentChar);
-        if (currentIndex == -1) return currentChar;
-
-        if (goingDown)
-        {
-            // Move down, wrap around to start if at end
-            return currentIndex < column.Length - 1 ? column[currentIndex + 1] : column[0];
-        }
-        else
-        {
-            // Move up, wrap around to end if at start
-            return currentIndex > 0 ? column[currentIndex - 1] : column[column.Length - 1];
-        }
-    }
-
     public string GeneratePasswordFromPattern(string fingerprint, char startChar, int outputLength)
     {
         var sb = new StringBuilder();
@@ -124,42 +64,47 @@ public class PasswordAnalyzer
         var steps = Regex.Split(fingerprint, @"(?=[→←↑↓►◄▲▼◘])")
             .Where(s => !string.IsNullOrWhiteSpace(s))
             .ToList();
-        var tempSteps = steps.Skip(1).ToList();//.Skip(1);
-        while (steps.Count < outputLength)
+        var tempSteps = steps.ToList();
+
+        // Ensure enough steps for the desired output length
+        while (steps.Count(x =>
+            x == "►" ||
+            x == "◄" ||
+            x == "▲" ||
+            x == "▼" ||
+            x == "◘") < outputLength + 1)
             steps.AddRange(tempSteps);
 
         foreach (var step in steps)
         {
-            if (step.Contains("(")) continue; // Skip encoded references
-
             try
             {
                 switch (step)
                 {
                     case "↓":
                     case "▼":
-                        currentChar = GetNextCharInColumn(currentChar, true);
+                        currentChar = _keyboard.GetNextCharInColumn(currentChar, true);
                         if (step == "▼")
                             sb.Append(currentChar);
                         break;
 
                     case "↑":
                     case "▲":
-                        currentChar = GetNextCharInColumn(currentChar, false);
+                        currentChar = _keyboard.GetNextCharInColumn(currentChar, false);
                         if (step == "▲")
                             sb.Append(currentChar);
                         break;
 
                     case "←":
                     case "◄":
-                        currentChar = GetNextCharInRow(currentChar, false);
+                        currentChar = _keyboard.GetNextCharInRow(currentChar, false);
                         if (step == "◄")
                             sb.Append(currentChar);
                         break;
 
                     case "→":
                     case "►":
-                        currentChar = GetNextCharInRow(currentChar, true);
+                        currentChar = _keyboard.GetNextCharInRow(currentChar, true);
                         if (step == "►")
                             sb.Append(currentChar);
                         break;
@@ -167,6 +112,9 @@ public class PasswordAnalyzer
                     case "◘":
                         sb.Append(currentChar);
                         break;
+
+                    default:
+                        throw new Exception("Invalid step: " + step);
                 }
                 if (sb.Length >= outputLength)
                     break;
@@ -197,17 +145,10 @@ public class PasswordAnalyzer
         foreach (char startChar in startingPoints)
         {
             // Generate the initial pattern
-            var basePattern = GeneratePasswordFromPattern(command, startChar, targetLength);
+            var password = GeneratePasswordFromPattern(command, startChar, targetLength);
 
-            if (basePattern.Length == 0)
+            if (password.Length == 0)
                 continue;
-
-            // Calculate how many times we need to repeat the pattern
-            int repetitions = (targetLength + basePattern.Length - 1) / basePattern.Length;
-            var password = string.Concat(Enumerable.Repeat(basePattern, repetitions));
-
-            // Trim to the target length
-            password = password.Substring(0, targetLength);
 
             passwords.Add(password);
         }
