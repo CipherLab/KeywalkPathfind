@@ -124,7 +124,7 @@ public class PasswordAnalyzer
         var steps = Regex.Split(fingerprint, @"(?=[→←↑↓►◄▲▼◘])")
             .Where(s => !string.IsNullOrWhiteSpace(s))
             .ToList();
-        var tempSteps = steps.ToList();//.Skip(1);
+        var tempSteps = steps.Skip(1).ToList();//.Skip(1);
         while (steps.Count < outputLength)
             steps.AddRange(tempSteps);
 
