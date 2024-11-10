@@ -1,22 +1,24 @@
-// Updated PathAnalyzer.cs
-
+using System;
 using System.Text;
 using System.Text.RegularExpressions;
 
 namespace KeyWalkAnalyzer3;
 
-public class PathAnalyzer
+public class PathAnalyzer : IPathAnalyzer, IDisposable
 {
     private readonly KeyboardLayout keyboard;
     private readonly AStar pathFinder;
+    private bool disposed = false;
 
-    public PathAnalyzer()
+    public PathAnalyzer() : this(new KeyboardLayout(), new AStar(new KeyboardLayout())) { }
+
+    public PathAnalyzer(KeyboardLayout keyboard, AStar pathFinder)
     {
-        keyboard = new KeyboardLayout();
-        pathFinder = new AStar(keyboard);
+        this.keyboard = keyboard;
+        this.pathFinder = pathFinder;
     }
 
-    public List<PathStep> GenerateKeyPath(string password)
+    public virtual List<PathStep> GenerateKeyPath(string password)
     {
         if (string.IsNullOrEmpty(password))
             return new List<PathStep>();
@@ -37,67 +39,6 @@ public class PathAnalyzer
         }
 
         return OptimizePath(completePath);
-    }
-
-    public string GeneratePasswordFromPattern(string fingerprint, char startChar)
-    {
-        var sb = new StringBuilder();
-        sb.Append(startChar);
-        var currentChar = startChar;
-
-        // Split the fingerprint into individual steps
-        var steps = Regex.Split(fingerprint, @"(?=press|right|left|up|down)")
-            .Where(s => !string.IsNullOrWhiteSpace(s))
-            .ToList();
-
-        foreach (var step in steps)
-        {
-            if (step.Contains("(")) continue; // Skip encoded references
-
-            if (step.Contains("down"))
-            {
-                try
-                {
-                    currentChar = keyboard.GetVerticalNeighbor(currentChar, 1);
-                    sb.Append(currentChar);
-                }
-                catch { break; }
-            }
-            else if (step.Contains("up"))
-            {
-                try
-                {
-                    currentChar = keyboard.GetVerticalNeighbor(currentChar, -1);
-                    sb.Append(currentChar);
-                }
-                catch { break; }
-            }
-            else if (step.Contains("left"))
-            {
-                var neighbors = keyboard.GetHorizontalNeighbors(currentChar);
-                if (neighbors.Count > 0 && neighbors[0] != currentChar)
-                {
-                    currentChar = neighbors[0];
-                    sb.Append(currentChar);
-                }
-            }
-            else if (step.Contains("right"))
-            {
-                var neighbors = keyboard.GetHorizontalNeighbors(currentChar);
-                if (neighbors.Count > 1)
-                {
-                    currentChar = neighbors[1];
-                    sb.Append(currentChar);
-                }
-                else if (neighbors.Count > 0)
-                {
-                    currentChar = neighbors[0];
-                    sb.Append(currentChar);
-                }
-            }
-        }
-
-        return sb.ToString();
     }
 
     private List<PathStep> OptimizePath(List<PathStep> path)
@@ -181,49 +122,8 @@ public class PathAnalyzer
 
     public string EncodePath(List<PathStep> path)
     {
-        var sb = new StringBuilder();
-        var dictionary = new Dictionary<string, int>();
-        var currentPhrase = new StringBuilder();
-        var lookAheadWindow = 4; // Adjustable window size
-
-        for (int i = 0; i < path.Count; i++)
-        {
-            currentPhrase.Clear();
-            int maxMatch = 0;
-            int matchPosition = -1;
-
-            // Look for matches in the dictionary
-            for (int j = i; j < Math.Min(i + lookAheadWindow, path.Count); j++)
-            {
-                currentPhrase.Append(path[j].ToString() + "|");
-                string phrase = currentPhrase.ToString();
-
-                if (dictionary.TryGetValue(phrase, out int position))
-                {
-                    if (phrase.Length > maxMatch)
-                    {
-                        maxMatch = phrase.Length;
-                        matchPosition = position;
-                    }
-                }
-            }
-
-            if (maxMatch > 0)
-            {
-                // Encode as (position, length)
-                sb.Append($"({matchPosition},{maxMatch})");
-                i += maxMatch / 2 - 1; // Skip matched steps
-            }
-            else
-            {
-                // Add new phrase to dictionary and output literal
-                string newPhrase = path[i].ToString() + "|";
-                dictionary[newPhrase] = dictionary.Count;
-                sb.Append(path[i].ToString());
-            }
-        }
-
-        return sb.ToString();
+        // Use the new ToAsciiCharacter method to encode the path
+        return PathStep.SimplifyPathSteps(path);
     }
 
     public double CalculateSimilarity(string fingerprint1, string fingerprint2)
@@ -260,5 +160,26 @@ public class PathAnalyzer
         }
 
         return distance[s1.Length, s2.Length];
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposed)
+        {
+            if (disposing)
+            {
+                // Dispose managed resources
+            }
+
+            // Free unmanaged resources if any
+
+            disposed = true;
+        }
     }
 }

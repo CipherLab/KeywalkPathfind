@@ -61,11 +61,3 @@ The example output for the generated paths to create new passwords is as follows
 	▲▼	hyhyhy
 	→►←◄	hkhkhk
 ```
-
-## Contributing
-
-Contributions are welcome! Please fork the repository and create a pull request with your changes. Make sure to provide a clear description of your changes and update any relevant documentation.
-
-## License
-
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for more information.

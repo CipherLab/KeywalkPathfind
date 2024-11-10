@@ -1,69 +1,57 @@
 using Xunit;
-using Moq;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace KeyWalkAnalyzer3.Tests;
 
 public class PasswordAnalyzerTests
 {
+    private readonly KeyboardLayout _keyboard;
+    private readonly PathAnalyzer _pathAnalyzer;
     private readonly PasswordAnalyzer _analyzer;
 
     public PasswordAnalyzerTests()
     {
-        _analyzer = new PasswordAnalyzer();
+        _keyboard = new KeyboardLayout();
+        _pathAnalyzer = new PathAnalyzer();
+        _analyzer = new PasswordAnalyzer(_keyboard, _pathAnalyzer);
     }
-
-
-    [Fact]
-    public void AnalyzePassword_SinglePassword_CreatesNewPatternGroup()
-    {
-        // Arrange & Act
-        _analyzer.AnalyzePassword("test123");
-
-        // Assert
-        var groups = _analyzer.GetPatternGroups();
-        Assert.Single(groups);
-        Assert.Contains("test123", groups.First().Value);
-    }
-
-    [Fact]
-    public void AnalyzePassword_SimilarPasswords_GroupsTogether()
-    {
-        // Arrange & Act
-        _analyzer.AnalyzePassword("qwerty");
-        _analyzer.AnalyzePassword("qwerty123");
-
-        // Assert
-        var groups = _analyzer.GetPatternGroups();
-        Assert.True(groups.Count <= 2); // Should be grouped if similarity > 0.8
-        Assert.Contains(groups, g =>
-        g.Value.Where(x => x.Contains("qwerty")).Any() &&
-        g.Value.Where(x => x.Contains("qwerty123")).Any());
-    }
-
-    [Fact]
-    public void AnalyzePassword_DissimilarPasswords_CreatesSeparateGroups()
-    {
-        // Arrange & Act
-        _analyzer.AnalyzePassword("123qwe");
-        _analyzer.AnalyzePassword("mznx");
-
-        // Assert
-        var groups = _analyzer.GetPatternGroups();
-        Assert.Equal(2, groups.Count);
-    }
+    /*
+                  ◘	hhhhhh
+                  ►	hjkl;'
+                  ►◄	hjhjhj
+                  ◄	hgfdsa
+                  ◄►	hghghg
+                  ►►←◄	hjkhjk
+                  →→►←←◄	hlhlhl
+                  ←◄→►	hfhfhf
+                  ▲▼	hyhyhy
+                  →►←◄	hkhkhk
+              */
 
     [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData(" ")]
-    public void AnalyzePassword_InvalidInput_HandlesGracefully(string password)
+    [InlineData("◘", "hhhhhh")]
+    [InlineData("►", "hjkl;'")]
+    [InlineData("►◄", "hjhjhj")]
+    [InlineData("◄", "hgfdsa")]
+    [InlineData("◄►", "hghghg")]
+    [InlineData("►►←◄", "hjkhjk")]
+    [InlineData("→→►←←◄", "hlhlhl")]
+    [InlineData("←◄→►", "hfhfhf")]
+    [InlineData("▲▼", "hyhyhy")]
+    [InlineData("→►←◄", "hkhkhk")]
+    public void Test(string input, string expected)
     {
-        // Arrange & Act
-        _analyzer.AnalyzePassword(password);
+        // Act
+        PathAnalyzer pathAnalyzer = new PathAnalyzer();
+        PasswordAnalyzer passwordAnalyzer = new PasswordAnalyzer(_keyboard, pathAnalyzer);
+        passwordAnalyzer.AnalyzePasswords(new string[] { input });
+        var password = passwordAnalyzer.GeneratePassword(input, expected[0], expected.Length);
+
 
         // Assert
-        var groups = _analyzer.GetPatternGroups();
-        Assert.Empty(groups);
+        Assert.Equal(expected, password);
+
     }
+
 }

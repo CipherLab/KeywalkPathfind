@@ -1,81 +1,217 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Text;
+using System.Text.RegularExpressions;
 
 namespace KeyWalkAnalyzer3;
-
 public class PasswordAnalyzer
 {
-    private readonly PathAnalyzer pathAnalyzer;
-    private readonly Dictionary<string, List<string>> patternGroups;
-    private readonly KeyboardLayout keyboard;
+    private readonly PathAnalyzer _pathAnalyzer;
+    private readonly KeyboardLayout _keyboard;
+    private readonly Dictionary<string, List<string>> _patternGroups;
+    private List<PathStep> _path;
 
-    public PasswordAnalyzer()
+    public PasswordAnalyzer(
+        KeyboardLayout keyboard,
+        PathAnalyzer pathAnalyzer)
     {
-        pathAnalyzer = new PathAnalyzer();
-        patternGroups = new Dictionary<string, List<string>>();
-        keyboard = new KeyboardLayout();
+        _keyboard = keyboard;
+        _pathAnalyzer = pathAnalyzer;
+        _patternGroups = new Dictionary<string, List<string>>();
+        _path = new List<PathStep>();
     }
 
-    private List<PathStep> _path = new List<PathStep>();
+    public void AnalyzePasswords(IEnumerable<string> passwords)
+    {
+        foreach (var password in passwords.Where(p => !string.IsNullOrWhiteSpace(p)))
+        {
+            AnalyzePassword(password);
+        }
+    }
+
     public void AnalyzePassword(string password)
     {
         if (string.IsNullOrWhiteSpace(password))
-        {
             return;
-        }
 
-        _path = pathAnalyzer.GenerateKeyPath(password);
-        var fingerprint = pathAnalyzer.EncodePath(_path);
+        _path = _pathAnalyzer.GenerateKeyPath(password);
+        var fingerprint = _pathAnalyzer.EncodePath(_path);
 
-        // Group passwords by similar fingerprints
-        var similarGroupKey = patternGroups
-            .Where(g => pathAnalyzer.CalculateSimilarity(g.Key, fingerprint) > 0.8)
+        var similarGroupKey = _patternGroups
+            .Where(g => _pathAnalyzer.CalculateSimilarity(g.Key, fingerprint) > 0.8)
             .Select(g => g.Key)
             .FirstOrDefault();
 
         if (similarGroupKey != null)
+            _patternGroups[similarGroupKey].Add(password);
+        else
+            _patternGroups[fingerprint] = new List<string> { password };
+    }
+
+    public record PasswordAnalysis(
+        Dictionary<string, List<string>> PatternGroups,
+        List<PathStep> Path);
+
+    public PasswordAnalysis GetAnalysis() => new(
+        _patternGroups,
+        _path);
+
+    private char GetNextCharInRow(char currentChar, bool goingRight)
+    {
+        var pos = _keyboard.GetKeyPosition(currentChar);
+        if (pos == null) return currentChar;
+
+        // Get the row from QWERTY layout
+        var row = pos.Row switch
         {
-            patternGroups[similarGroupKey].Add(password);
+            0 => "1234567890-=",
+            1 => "qwertyuiop[]",
+            2 => "asdfghjkl;'",
+            3 => "zxcvbnm,./",
+            _ => ""
+        };
+
+        int currentIndex = row.IndexOf(currentChar);
+        if (currentIndex == -1) return currentChar;
+
+        if (goingRight)
+        {
+            // Move right, wrap around to start if at end
+            return currentIndex < row.Length - 1 ? row[currentIndex + 1] : row[0];
         }
         else
         {
-            patternGroups[fingerprint] = new List<string> { password };
+            // Move left, wrap around to end if at start
+            return currentIndex > 0 ? row[currentIndex - 1] : row[row.Length - 1];
         }
     }
 
-    public Dictionary<string, List<string>> GetPatternGroups()
+    private char GetNextCharInColumn(char currentChar, bool goingDown)
     {
-        return patternGroups;
-    }
-    public List<PathStep> GetPath()
-    {
-        return _path;
-    }
-    public string GeneratePasswordFromStartChar(char startChar)
-    {
-        // Implement the specific keyboard path pattern generation
-        // The pattern is roughly: 3 in a row, down, back 3, 3 in a row
-        var currentPos = keyboard.GetKeyPosition(startChar);
-        if (currentPos == null)
+        var pos = _keyboard.GetKeyPosition(currentChar);
+        if (pos == null) return currentChar;
+
+        // Get the column from QWERTY layout
+        var column = pos.Col switch
         {
-            throw new ArgumentException($"Invalid start character: {startChar}");
+            0 => "1234567890-=",
+            1 => "qwertyuiop[]",
+            2 => "asdfghjkl;'",
+            3 => "zxcvbnm,./",
+            _ => ""
+        };
+
+        int currentIndex = column.IndexOf(currentChar);
+        if (currentIndex == -1) return currentChar;
+
+        if (goingDown)
+        {
+            // Move down, wrap around to start if at end
+            return currentIndex < column.Length - 1 ? column[currentIndex + 1] : column[0];
+        }
+        else
+        {
+            // Move up, wrap around to end if at start
+            return currentIndex > 0 ? column[currentIndex - 1] : column[column.Length - 1];
+        }
+    }
+
+    public string GeneratePasswordFromPattern(string fingerprint, char startChar, int outputLength)
+    {
+        var sb = new StringBuilder();
+        sb.Append(startChar);
+        var currentChar = startChar;
+
+        // Split the fingerprint into individual steps using ASCII characters
+        var steps = Regex.Split(fingerprint, @"(?=[→←↑↓►◄▲▼◘])")
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .ToList();
+        var tempSteps = steps.ToList();//.Skip(1);
+        while (steps.Count < outputLength)
+            steps.AddRange(tempSteps);
+
+        foreach (var step in steps)
+        {
+            if (step.Contains("(")) continue; // Skip encoded references
+
+            try
+            {
+                switch (step)
+                {
+                    case "↓":
+                    case "▼":
+                        currentChar = GetNextCharInColumn(currentChar, true);
+                        if (step == "▼")
+                            sb.Append(currentChar);
+                        break;
+
+                    case "↑":
+                    case "▲":
+                        currentChar = GetNextCharInColumn(currentChar, false);
+                        if (step == "▲")
+                            sb.Append(currentChar);
+                        break;
+
+                    case "←":
+                    case "◄":
+                        currentChar = GetNextCharInRow(currentChar, false);
+                        if (step == "◄")
+                            sb.Append(currentChar);
+                        break;
+
+                    case "→":
+                    case "►":
+                        currentChar = GetNextCharInRow(currentChar, true);
+                        if (step == "►")
+                            sb.Append(currentChar);
+                        break;
+
+                    case "◘":
+                        sb.Append(currentChar);
+                        break;
+                }
+                if (sb.Length >= outputLength)
+                    break;
+            }
+            catch
+            {
+                // If we hit a boundary, just continue with current char
+                continue;
+            }
         }
 
-        // Generate password following the pattern
-        var password = new List<char> { startChar };
+        return sb.ToString();
+    }
 
-        // First 3 in a row (horizontally)
-        var horizontalNeighbors = keyboard.GetHorizontalNeighbors(startChar);
-        password.AddRange(horizontalNeighbors.Take(2));
+    public string GeneratePassword(string command, char startChar, int? length = null)
+    {
+        int targetLength = length ?? command.Length;
+        var password = GeneratePasswords(command, startChar.ToString(), targetLength).First();
 
-        // Move down
-        var downChar = keyboard.GetVerticalNeighbor(password[2], 1);
-        password.Add(downChar);
+        return password;
+    }
 
-        // Back 3 (horizontally from the down character)
-        var backNeighbors = keyboard.GetHorizontalNeighbors(downChar);
-        password.AddRange(backNeighbors.Take(2));
+    public IEnumerable<string> GeneratePasswords(string command, string startingPoints, int? length = null)
+    {
+        int targetLength = length ?? command.Length;
+        var passwords = new List<string>();
 
-        return new string(password.ToArray());
+        foreach (char startChar in startingPoints)
+        {
+            // Generate the initial pattern
+            var basePattern = GeneratePasswordFromPattern(command, startChar, targetLength);
+
+            if (basePattern.Length == 0)
+                continue;
+
+            // Calculate how many times we need to repeat the pattern
+            int repetitions = (targetLength + basePattern.Length - 1) / basePattern.Length;
+            var password = string.Concat(Enumerable.Repeat(basePattern, repetitions));
+
+            // Trim to the target length
+            password = password.Substring(0, targetLength);
+
+            passwords.Add(password);
+        }
+
+        return passwords;
     }
 }

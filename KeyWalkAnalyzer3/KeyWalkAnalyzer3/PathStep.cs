@@ -33,6 +33,71 @@ public class PathStep
             : 0;
     }
 
+    public string ToAsciiCharacter()
+    {
+        return (Direction, IsPress) switch
+        {
+            ("same", true) => "◘",
+            ("right", true) => "►",
+            ("left", true) => "◄",
+            ("up", true) => "▲",
+            ("down", true) => "▼",
+            ("right", false) => "→",
+            ("left", false) => "←",
+            ("up", false) => "↑",
+            ("down", false) => "↓",
+            _ => " "
+        };
+    }
+
+    public static string SimplifyPathSteps(List<PathStep> pathSteps)
+    {
+        if (pathSteps == null || pathSteps.Count == 0)
+            return string.Empty;
+
+        var asciiPath = string.Join("", pathSteps.Select(ps => ps.ToAsciiCharacter()));
+
+        // Simple path simplification logic
+        var simplified = new System.Text.StringBuilder();
+        char? lastChar = null;
+        int count = 0;
+
+        foreach (char c in asciiPath)
+        {
+            if (lastChar == null)
+            {
+                lastChar = c;
+                count = 1;
+            }
+            else if (c == lastChar)
+            {
+                count++;
+            }
+            else
+            {
+                simplified.Append(lastChar);
+                if (count > 1)
+                {
+                    simplified.Append(count);
+                }
+                lastChar = c;
+                count = 1;
+            }
+        }
+
+        // Add the last character
+        if (lastChar != null)
+        {
+            simplified.Append(lastChar);
+            if (count > 1)
+            {
+                simplified.Append(count);
+            }
+        }
+
+        return simplified.ToString();
+    }
+
     public override string ToString()
     {
         if (Direction.StartsWith("shift"))
