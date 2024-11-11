@@ -40,7 +40,7 @@ public class PasswordAnalyzerTests
     [InlineData("←◄→►", "hfhfhf")]
     [InlineData("▲▼", "hyhyhy")]
     [InlineData("→►←◄", "hkhkhk")]
-    public void Test(string input, string expected)
+    public void TestPatternToPassword(string input, string expected)
     {
         // Act
         PathAnalyzer pathAnalyzer = new PathAnalyzer();
@@ -51,6 +51,33 @@ public class PasswordAnalyzerTests
 
         // Assert
         Assert.Equal(expected, password);
+
+    }
+
+    [Theory]
+    //[InlineData("hhhhhh", "◘")]
+    [InlineData("hjkl;'", "►")]
+    //[InlineData("hjhjhj", "►◄")]
+    //[InlineData("hgfdsa", "◄")]
+    //[InlineData("hghghg", "◄►")]
+    //[InlineData("hjkhjk", "►►←◄")]
+    //[InlineData("hlhlhl", "→→►←←◄")]
+    //[InlineData("hfhfhf", "←◄→►")]
+    //[InlineData("hyhyhy", "▲▼")]
+    //[InlineData("hkhkhk", "→►←◄")]
+    public void TestPasswordToPattern(string input, string expected)
+    {
+        // Act
+        PathAnalyzer pathAnalyzer = new PathAnalyzer();
+        PasswordAnalyzer passwordAnalyzer = new PasswordAnalyzer(_keyboard, pathAnalyzer);
+        passwordAnalyzer.AnalyzePasswords(new string[] { input });
+        var path = passwordAnalyzer.GetAnalysis().Path;
+
+        var pattern = pathAnalyzer.EncodePath(path);
+
+        // Assert
+        Assert.Equal(expected, pattern);
+
 
     }
 

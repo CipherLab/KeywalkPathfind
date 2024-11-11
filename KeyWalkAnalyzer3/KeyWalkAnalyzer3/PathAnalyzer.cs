@@ -31,8 +31,7 @@ public class PathAnalyzer : IPathAnalyzer, IDisposable
 
             // Filter out release steps for adjacent keys
             var filteredPath = path.Where(step =>
-                step.ToString().Contains("right") ||
-                step.ToString().Contains("press")
+                step.Direction != ("release")
             ).ToList();
 
             completePath.AddRange(filteredPath);
@@ -123,7 +122,12 @@ public class PathAnalyzer : IPathAnalyzer, IDisposable
     public string EncodePath(List<PathStep> path)
     {
         // Use the new ToAsciiCharacter method to encode the path
-        return PathStep.SimplifyPathSteps(path);
+        StringBuilder sb = new StringBuilder();
+        foreach (var step in path)
+        {
+            sb.Append(step.ToAsciiCharacter(step.Direction, step.IsPress));
+        }
+        return sb.ToString();
     }
 
     public double CalculateSimilarity(string fingerprint1, string fingerprint2)
