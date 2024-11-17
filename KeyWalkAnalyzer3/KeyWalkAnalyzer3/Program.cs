@@ -53,6 +53,19 @@ class Program
             args = new string[] { "generate", "--command", "→►", "--length", "6", "--starting-point", "s" };
         }
 
+        var layout = new KeyboardLayout();
+        var detector = new PatternDetector(layout);
+
+        string input = "qazwsx";
+        var patterns = detector.FindRepeatingPatterns(input);
+
+        foreach (var pattern in patterns)
+        {
+            Console.WriteLine($"Pattern: {pattern.ToArrowString()}");
+            string validated = detector.ValidatePattern(pattern, input.Length);
+            Console.WriteLine($"Validates to: {validated}");
+        }
+
         return await Parser.Default.ParseArguments<ProcessOptions, GenerateOptions>(args)
             .MapResult(
                 (ProcessOptions opts) => ProcessPasswords(opts.FolderFile),

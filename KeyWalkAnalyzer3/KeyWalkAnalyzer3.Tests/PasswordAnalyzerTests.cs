@@ -70,6 +70,11 @@ public class PasswordAnalyzerTests
     [InlineData("hyhyhy", "▲▼")]
     [InlineData("hkhkhk", "→►←◄")]
     [InlineData("1qa1qa2ws2ws3ed3ed", "▼▼↑▲▼▼↑↑►")]
+    [InlineData("1qa!QA2ws@WS3ed#ED", "▼▼↑▲▼▼↑↑►")]
+    [InlineData("qazwsx", "▼▼↑↑►▼▼")]
+    [InlineData("qaz", "▼")]
+    [InlineData("qazwsxedcrfv", "▼▼↑↑►")]
+
     public void TestPasswordToPattern(string input, string expected)
     {
         // Act
