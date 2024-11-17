@@ -44,7 +44,7 @@ class Program
                 ►◄	hjhjhj
                 ◄	hgfdsa
                 ◄►	hghghg
-                ►►←◄	hjkhjk
+                ►►←◄	hjkh
                 →→►←←◄	hlhlhl
                 ←◄→►	hfhfhf
                 ▲▼	hyhyhy

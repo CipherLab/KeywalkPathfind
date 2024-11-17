@@ -52,10 +52,25 @@ public class PathAnalyzer : IPathAnalyzer, IDisposable
         StringBuilder sb = new StringBuilder();
         foreach (var step in path)
         {
-            sb.Append(step.ToAsciiCharacter(step.Direction, step.IsPress));
-        }
+            if (step.Metadata != null && step.Metadata.Any() && step.Metadata.ContainsKey("steps"))
+            {
+                // Append the ASCII character for the step direction (e.g. "→" for right)
+                var stepCount = Convert.ToInt16(step.Metadata["steps"]);
+                for (int i = 0; i < stepCount; i++)
+                {
+                    sb.Append(step.ToAsciiCharacter(step.Direction, step.IsPress));
+                }
+            }
+            else
+                sb.Append(step.ToAsciiCharacter(step.Direction, step.IsPress));
 
-        return PathStep.GetSmallestRepeatingPattern(sb.ToString());
+        }
+        var tempVal = sb.ToString()
+          .Replace("→◘", "►")
+          .Replace("←◘", "◄")
+          .Replace("↑◘", "▲")
+          .Replace("↓◘", "▼");
+        return PathStep.GetSmallestRepeatingPattern(tempVal);
     }
 
     public double CalculateSimilarity(string fingerprint1, string fingerprint2)

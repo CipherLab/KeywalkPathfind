@@ -31,16 +31,18 @@ public class PasswordAnalyzerTests
               */
 
     [Theory]
+    [InlineData("►←◄", "hjg")]
     [InlineData("◘", "hhhhhh")]
     [InlineData("►", "hjkl;'")]
     [InlineData("►◄", "hjhjhj")]
     [InlineData("◄", "hgfdsa")]
     [InlineData("◄►", "hghghg")]
-    [InlineData("►►←◄", "hjkhjk")]
+    [InlineData("►", "hj")]
     [InlineData("→→►←←◄", "hlhlhl")]
     [InlineData("←◄→►", "hfhfhf")]
     [InlineData("▲▼", "hyhyhy")]
     [InlineData("→►←◄", "hkhkhk")]
+    [InlineData("▼▼↑▲▼▼↑↑►", "1qa1qa2ws2ws3ed3ed")]
     public void TestPatternToPassword(string input, string expected)
     {
         // Act
@@ -56,16 +58,18 @@ public class PasswordAnalyzerTests
     }
 
     [Theory]
+    [InlineData("hjg", "►←◄")]
     [InlineData("hhhhhh", "◘")]
     [InlineData("hjkl;'", "►")]
     [InlineData("hjhjhj", "►◄")]
     [InlineData("hgfdsa", "◄")]
     [InlineData("hghghg", "◄►")]
-    [InlineData("hjkhjk", "►►←◄")]
+    [InlineData("hj", "►")]
     [InlineData("hlhlhl", "→→►←←◄")]
     [InlineData("hfhfhf", "←◄→►")]
     [InlineData("hyhyhy", "▲▼")]
     [InlineData("hkhkhk", "→►←◄")]
+    [InlineData("1qa1qa2ws2ws3ed3ed", "▼▼↑▲▼▼↑↑►")]
     public void TestPasswordToPattern(string input, string expected)
     {
         // Act

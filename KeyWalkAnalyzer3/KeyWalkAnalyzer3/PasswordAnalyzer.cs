@@ -25,8 +25,9 @@ public class PasswordAnalyzer
 
         _path = _pathAnalyzer.GenerateKeyPath(password);
         var joined = String.Join("", _path);
-
+      
         _smallestPath = _pathAnalyzer.EncodePath(_path);
+       
     }
 
     public string GetSmallestPath() => _smallestPath;
