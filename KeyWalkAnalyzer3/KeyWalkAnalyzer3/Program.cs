@@ -134,16 +134,11 @@ class Program
         {
             var passwords = File.ReadAllLines(filePath);
             Console.WriteLine($"Processing file: {filePath}");
-            passwordAnalyzer.AnalyzePasswords(passwords);
-
-            var analysis = passwordAnalyzer.GetAnalysis();
-            foreach (var group in analysis.PatternGroups)
+            foreach (var password in passwords)
             {
-                Console.WriteLine($"Pattern: {group.Key}");
-                foreach (var pwd in group.Value)
-                {
-                    Console.WriteLine($"\t{pwd}");
-                }
+                 passwordAnalyzer.AnalyzePassword(password);
+                var pwd = passwordAnalyzer.GetSmallestPath();
+                Console.WriteLine("Pwd:"+pwd);
             }
         }
         catch (Exception ex)

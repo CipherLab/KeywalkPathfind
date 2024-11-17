@@ -6,8 +6,8 @@ public class PasswordAnalyzer
 {
     private readonly PathAnalyzer _pathAnalyzer;
     private readonly KeyboardLayout _keyboard;
-    private readonly Dictionary<string, List<string>> _patternGroups;
     private List<PathStep> _path;
+    private string _smallestPath;
 
     public PasswordAnalyzer(
         KeyboardLayout keyboard,
@@ -15,16 +15,7 @@ public class PasswordAnalyzer
     {
         _keyboard = keyboard;
         _pathAnalyzer = pathAnalyzer;
-        _patternGroups = new Dictionary<string, List<string>>();
         _path = new List<PathStep>();
-    }
-
-    public void AnalyzePasswords(IEnumerable<string> passwords)
-    {
-        foreach (var password in passwords.Where(p => !string.IsNullOrWhiteSpace(p)))
-        {
-            AnalyzePassword(password);
-        }
     }
 
     public void AnalyzePassword(string password)
@@ -33,26 +24,15 @@ public class PasswordAnalyzer
             return;
 
         _path = _pathAnalyzer.GenerateKeyPath(password);
-        var fingerprint = _pathAnalyzer.EncodePath(_path);
+        var joined = String.Join("", _path);
 
-        var similarGroupKey = _patternGroups
-            .Where(g => _pathAnalyzer.CalculateSimilarity(g.Key, fingerprint) > 0.8)
-            .Select(g => g.Key)
-            .FirstOrDefault();
-
-        if (similarGroupKey != null)
-            _patternGroups[similarGroupKey].Add(password);
-        else
-            _patternGroups[fingerprint] = new List<string> { password };
+        _smallestPath = _pathAnalyzer.EncodePath(_path);
     }
 
-    public record PasswordAnalysis(
-        Dictionary<string, List<string>> PatternGroups,
-        List<PathStep> Path);
+    public string GetSmallestPath() => _smallestPath;
 
-    public PasswordAnalysis GetAnalysis() => new(
-        _patternGroups,
-        _path);
+    public record PasswordAnalysis(
+        List<PathStep> Path);
 
     public string GeneratePasswordFromPattern(string fingerprint, char startChar, int outputLength)
     {
@@ -82,31 +62,39 @@ public class PasswordAnalyzer
                 switch (step)
                 {
                     case "↓":
+                        currentChar = _keyboard.GetNextCharInColumn(currentChar, true);
+                        break;
+
                     case "▼":
                         currentChar = _keyboard.GetNextCharInColumn(currentChar, true);
-                        if (step == "▼")
-                            sb.Append(currentChar);
+                        sb.Append(currentChar);
                         break;
 
                     case "↑":
+                        currentChar = _keyboard.GetNextCharInColumn(currentChar, false);
+                        break;
+
                     case "▲":
                         currentChar = _keyboard.GetNextCharInColumn(currentChar, false);
-                        if (step == "▲")
-                            sb.Append(currentChar);
+                        sb.Append(currentChar);
                         break;
 
                     case "←":
+                        currentChar = _keyboard.GetNextCharInRow(currentChar, false);
+                        break;
+
                     case "◄":
                         currentChar = _keyboard.GetNextCharInRow(currentChar, false);
-                        if (step == "◄")
-                            sb.Append(currentChar);
+                        sb.Append(currentChar);
                         break;
 
                     case "→":
+                        currentChar = _keyboard.GetNextCharInRow(currentChar, true);
+                        break;
+
                     case "►":
                         currentChar = _keyboard.GetNextCharInRow(currentChar, true);
-                        if (step == "►")
-                            sb.Append(currentChar);
+                        sb.Append(currentChar);
                         break;
 
                     case "◘":

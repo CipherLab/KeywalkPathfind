@@ -27,6 +27,7 @@ public class PasswordAnalyzerTests
                   ←◄→►	hfhfhf
                   ▲▼	hyhyhy
                   →►←◄	hkhkhk
+                  ↓
               */
 
     [Theory]
@@ -45,7 +46,7 @@ public class PasswordAnalyzerTests
         // Act
         PathAnalyzer pathAnalyzer = new PathAnalyzer();
         PasswordAnalyzer passwordAnalyzer = new PasswordAnalyzer(_keyboard, pathAnalyzer);
-        passwordAnalyzer.AnalyzePasswords(new string[] { input });
+        passwordAnalyzer.AnalyzePassword(input);
         var password = passwordAnalyzer.GeneratePassword(input, expected[0], expected.Length);
 
 
@@ -55,26 +56,23 @@ public class PasswordAnalyzerTests
     }
 
     [Theory]
-    //[InlineData("hhhhhh", "◘")]
+    [InlineData("hhhhhh", "◘")]
     [InlineData("hjkl;'", "►")]
-    //[InlineData("hjhjhj", "►◄")]
-    //[InlineData("hgfdsa", "◄")]
-    //[InlineData("hghghg", "◄►")]
-    //[InlineData("hjkhjk", "►►←◄")]
-    //[InlineData("hlhlhl", "→→►←←◄")]
-    //[InlineData("hfhfhf", "←◄→►")]
-    //[InlineData("hyhyhy", "▲▼")]
-    //[InlineData("hkhkhk", "→►←◄")]
+    [InlineData("hjhjhj", "►◄")]
+    [InlineData("hgfdsa", "◄")]
+    [InlineData("hghghg", "◄►")]
+    [InlineData("hjkhjk", "►►←◄")]
+    [InlineData("hlhlhl", "→→►←←◄")]
+    [InlineData("hfhfhf", "←◄→►")]
+    [InlineData("hyhyhy", "▲▼")]
+    [InlineData("hkhkhk", "→►←◄")]
     public void TestPasswordToPattern(string input, string expected)
     {
         // Act
         PathAnalyzer pathAnalyzer = new PathAnalyzer();
         PasswordAnalyzer passwordAnalyzer = new PasswordAnalyzer(_keyboard, pathAnalyzer);
-        passwordAnalyzer.AnalyzePasswords(new string[] { input });
-        var path = passwordAnalyzer.GetAnalysis().Path;
-
-        var pattern = pathAnalyzer.EncodePath(path);
-
+        passwordAnalyzer.AnalyzePassword(input);
+        var pattern = passwordAnalyzer.GetSmallestPath();
         // Assert
         Assert.Equal(expected, pattern);
 

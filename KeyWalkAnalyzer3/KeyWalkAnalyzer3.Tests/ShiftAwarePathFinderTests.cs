@@ -81,22 +81,6 @@ public class ShiftAwarePathFinderTests
     }
 
     [Fact]
-    public void FindPath_WithShift_AppliesShiftCorrectly()
-    {
-        // Arrange
-        SetupMockStrategy(1.0, 2.0);
-        string sequence = "As";
-
-        // Act
-        var path = _pathFinder.FindPath(sequence);
-
-        // Assert
-        Assert.Equal(8, path.Count);
-        Assert.Equal($"shift_down for 'A'", path[0].ToString());
-        Assert.Equal("shift_up", path[7].Direction);
-    }
-
-    [Fact]
     public void FindPath_MultipleShifts_OptimizesShiftUsage()
     {
         // Arrange

@@ -36,8 +36,8 @@ public class PathStepTests
         string moveString = moveStep.ToString();
 
         // Assert
-        Assert.Equal("press 'a'", pressString);
-        Assert.Equal("down", moveString);
+        Assert.Equal("◘", pressString);
+        Assert.Equal("↓", moveString);
     }
 
     [Fact]
@@ -50,7 +50,7 @@ public class PathStepTests
         string stepString = step.ToString();
 
         // Assert
-        Assert.Equal("left", stepString);
+        Assert.Equal("←", stepString);
     }
 
     [Fact]

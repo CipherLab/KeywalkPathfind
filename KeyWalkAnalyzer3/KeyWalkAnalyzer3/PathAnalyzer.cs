@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -34,89 +34,16 @@ public class PathAnalyzer : IPathAnalyzer, IDisposable
                 step.Direction != ("release")
             ).ToList();
 
+            // Mark the last step of each character path as a "press" (take) step
+            if (filteredPath.Count > 0)
+            {
+                filteredPath[filteredPath.Count - 1].IsPress = true;
+            }
+
             completePath.AddRange(filteredPath);
         }
 
-        return OptimizePath(completePath);
-    }
-
-    private List<PathStep> OptimizePath(List<PathStep> path)
-    {
-        var optimized = new List<PathStep>();
-        if (path.Count == 0) return optimized;
-
-        var currentStep = path[0];
-        int count = 1;
-
-        for (int i = 1; i < path.Count; i++)
-        {
-            if (path[i].ToString() == currentStep.ToString())
-            {
-                count++;
-            }
-            else
-            {
-                if (count > 1)
-                {
-                    optimized.Add(new PathStep('\0', $"{currentStep.Direction} * {count}", currentStep.IsPress));
-                }
-                else
-                {
-                    optimized.Add(currentStep);
-                }
-                currentStep = path[i];
-                count = 1;
-            }
-        }
-
-        // Add the last group
-        if (count > 1)
-        {
-            optimized.Add(new PathStep('\0', $"{currentStep.Direction} * {count}", currentStep.IsPress));
-        }
-        else
-        {
-            optimized.Add(currentStep);
-        }
-
-        return RemoveRedundantMoves(optimized);
-    }
-
-    private List<PathStep> RemoveRedundantMoves(List<PathStep> path)
-    {
-        var simplified = new List<PathStep>();
-        var redundantPairs = new Dictionary<string, string>
-        {
-            {"up", "down"},
-            {"down", "up"},
-            {"left", "right"},
-            {"right", "left"}
-        };
-
-        for (int i = 0; i < path.Count - 1; i++)
-        {
-            if (!path[i].IsPress && !path[i + 1].IsPress)
-            {
-                if (redundantPairs.TryGetValue(path[i].Direction, out string opposite))
-                {
-                    if (path[i + 1].Direction == opposite)
-                    {
-                        // Track redundant move
-                        path[i].IncrementRedundantMoveCount();
-                        path[i + 1].IncrementRedundantMoveCount();
-
-                        i++; // Skip both moves
-                        continue;
-                    }
-                }
-            }
-            simplified.Add(path[i]);
-        }
-
-        if (path.Count > 0)
-            simplified.Add(path[path.Count - 1]);
-
-        return simplified;
+        return completePath;
     }
 
     public string EncodePath(List<PathStep> path)
@@ -127,7 +54,8 @@ public class PathAnalyzer : IPathAnalyzer, IDisposable
         {
             sb.Append(step.ToAsciiCharacter(step.Direction, step.IsPress));
         }
-        return sb.ToString();
+
+        return PathStep.GetSmallestRepeatingPattern(sb.ToString());
     }
 
     public double CalculateSimilarity(string fingerprint1, string fingerprint2)
