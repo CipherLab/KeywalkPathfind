@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace KeyWalkAnalyzer3;
 
-public class PathAnalyzer : IPathAnalyzer, IDisposable
+public class PathAnalyzer : IPathAnalyzer
 {
     private readonly KeyboardLayout keyboard;
     private readonly AStar pathFinder;
@@ -109,24 +109,5 @@ public class PathAnalyzer : IPathAnalyzer, IDisposable
         return distance[s1.Length, s2.Length];
     }
 
-    public void Dispose()
-    {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
 
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!disposed)
-        {
-            if (disposing)
-            {
-                // Dispose managed resources
-            }
-
-            // Free unmanaged resources if any
-
-            disposed = true;
-        }
-    }
 }
